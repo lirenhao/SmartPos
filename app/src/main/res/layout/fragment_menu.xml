@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical"
+              android:background="@color/main_menu_item_press"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <GridLayout android:id="@+id/fl_item"
+                android:layout_width="@dimen/width_91"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:columnCount="3">
+    </GridLayout>
+</LinearLayout>

@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="gb2312"?>
+<!--
+	FILENAME: 银联8583.xml
+	PURPOSE : 
+	          Define the 8583 format, process code and transction factor
+			  This file include three part of setting:
+			  <FIELD_SETTING> : define table of ISO8583
+			  <ADDITIONAL>:define additional info,like Mac etc.
+	NOTICE  :
+	          The define table of ISO8583/1987
+	          {
+	          	Max Length or Fix Length;
+	          	Data Type:
+	          	      0: ASC Type
+	          	      1: BCD Type
+	          	      2: Binary Type
+	          	Length Type:
+	          	      0-Fix length,
+	          				1-var length (00-99),
+	          				2-var length (00-999);
+	          				3-Fix length 				   ASC Type
+	          				4-Var Length 	(00-99)  ASC Type
+	          				5-var length (00-999)  ASC Type
+	          }
+	          The define additional info
+	          {
+	            index  : from 1 to 64,in mac sequence
+	            offset : mac data offset the original data;
+	            len    : the mac data max len;
+	            flag   : the element is enable or unable;
+	          }
+	REVISION: 
+		刘罡 2008.11.04 创建
+		刘罡 2012.03.31 修改
+-->
+<root>
+	<!-- Field setting table of ISO8583 -->  
+	<FIELD_SETTING>
+	  <FIELD000 length="4" type="1" flag="0" option="0"/>
+		<FIELD001 length="8" type="0" flag="0" option="0"/>
+		<FIELD002 length="20" type="1" flag="1" option="0"/>
+		<FIELD003 length="6" type="1" flag="0" option="0"/>
+		<FIELD004 length="12" type="1" flag="0" option="0"/>
+		<FIELD005 length="12" type="1" flag="0" option="0"/>
+		<FIELD006 length="12" type="0" flag="0" option="0"/>
+		<FIELD007 length="10" type="0" flag="0" option="0"/>
+		<FIELD008 length="8" type="0" flag="0" option="0"/>
+		<FIELD009 length="8" type="1" flag="0" option="0"/>
+		<FIELD010 length="8" type="0" flag="0" option="0"/>
+		<FIELD011 length="6" type="1" flag="0" option="0"/>
+		<FIELD012 length="6" type="1" flag="0" option="0"/>
+		<FIELD013 length="4" type="1" flag="0" option="0"/>
+		<FIELD014 length="4" type="1" flag="0" option="0"/>
+		<FIELD015 length="4" type="1" flag="0" option="0"/>
+		<FIELD016 length="3" type="0" flag="0" option="0"/>
+		<FIELD017 length="4" type="0" flag="0" option="0"/>
+		<FIELD018 length="4" type="0" flag="0" option="0"/>
+		<FIELD019 length="3" type="0" flag="0" option="0"/>
+		<FIELD020 length="3" type="0" flag="0" option="0"/>
+		<FIELD021 length="3" type="0" flag="0" option="0"/>
+		<FIELD022 length="3" type="1" flag="0" option="0"/>
+		<FIELD023 length="3" type="1" flag="0" option="0"/>
+		<FIELD024 length="4" type="1" flag="0" option="0"/>
+		<FIELD025 length="2" type="1" flag="0" option="1"/>
+		<FIELD026 length="2" type="1" flag="0" option="0"/>
+		<FIELD027 length="1" type="0" flag="0" option="0"/>
+		<FIELD028 length="8" type="0" flag="0" option="0"/>
+		<FIELD029 length="8" type="0" flag="0" option="0"/>
+		<FIELD030 length="8" type="0" flag="0" option="0"/>
+		<FIELD031 length="8" type="0" flag="0" option="0"/>
+		<FIELD032 length="11" type="1" flag="1" option="1"/>
+		<FIELD033 length="11" type="0" flag="4" option="0"/>
+		<FIELD034 length="28" type="0" flag="1" option="0"/>
+		<FIELD035 length="37" type="1" flag="1" option="0"/>
+		<FIELD036 length="104" type="1" flag="2" option="0"/>
+		<FIELD037 length="12" type="0" flag="0" option="0"/>
+		<FIELD038 length="6" type="0" flag="0" option="0"/>
+		<FIELD039 length="2" type="0" flag="0" option="0"/>
+		<FIELD040 length="999" type="0" flag="5" option="0"/>
+		<FIELD041 length="8" type="0" flag="0" option="0"/>
+		<FIELD042 length="15" type="0" flag="0" option="0"/>
+		<FIELD043 length="40" type="0" flag="0" option="0"/>
+		<FIELD044 length="25" type="0" flag="1" option="0"/>
+		<FIELD045 length="76" type="0" flag="1" option="0"/>
+		<FIELD046 length="999" type="0" flag="2" option="0"/>
+		<FIELD047 length="999" type="0" flag="2" option="0"/>
+		<FIELD048 length="999" type="0" flag="2" option="0"/>
+		<FIELD049 length="3" type="1" flag="0" option="0"/>
+		<FIELD050 length="3" type="1" flag="0" option="0"/>
+		<FIELD051 length="3" type="1" flag="0" option="0"/>
+		<FIELD052 length="16" type="1" flag="0" option="0"/>
+		<FIELD053 length="16" type="1" flag="0" option="1"/>
+		<FIELD054 length="250" type="0" flag="2" option="0"/>
+		<FIELD055 length="999" type="2" flag="2" option="0"/>
+		<FIELD056 length="999" type="2" flag="2" option="1"/>
+		<FIELD057 length="999" type="0" flag="2" option="0"/>
+		<FIELD058 length="999" type="0" flag="2" option="0"/>
+		<FIELD059 length="999" type="0" flag="2" option="0"/>
+		<FIELD060 length="999" type="1" flag="2" option="1"/>
+		<FIELD061 length="999" type="0" flag="2" option="0"/>
+		<FIELD062 length="999" type="0" flag="2" option="0"/>
+		<FIELD063 length="999" type="0" flag="2" option="0"/>
+		<FIELD064 length="16" type="1" flag="0" option="0"/>
+		<FIELD065 length="0" type="0" flag="0" option="0"/>
+		<FIELD066 length="8" type="0" flag="3" option="0"/>
+		<FIELD067 length="6" type="1" flag="3" option="0"/>
+		<FIELD068 length="0" type="0" flag="0" option="0"/>
+		<FIELD069 length="0" type="0" flag="0" option="0"/>
+		<FIELD070 length="3" type="1" flag="0" option="0"/>
+		<FIELD071 length="0" type="0" flag="0" option="0"/>
+		<FIELD072 length="0" type="0" flag="0" option="0"/>
+		<FIELD073 length="0" type="0" flag="0" option="0"/>
+		<FIELD074 length="10" type="1" flag="0" option="0"/>
+		<FIELD075 length="10" type="1" flag="0" option="0"/>
+		<FIELD076 length="10" type="1" flag="0" option="0"/>
+		<FIELD077 length="10" type="1" flag="0" option="0"/>
+		<FIELD078 length="10" type="1" flag="0" option="0"/>
+		<FIELD079 length="10" type="1" flag="0" option="0"/>
+		<FIELD080 length="0" type="0" flag="0" option="0"/>
+		<FIELD081 length="10" type="1" flag="0" option="0"/>
+		<FIELD082 length="12" type="1" flag="0" option="0"/>
+		<FIELD083 length="0" type="0" flag="0" option="0"/>
+		<FIELD084 length="12" type="1" flag="0" option="0"/>
+		<FIELD085 length="0" type="0" flag="0" option="0"/>
+		<FIELD086 length="16" type="1" flag="0" option="0"/>
+		<FIELD087 length="16" type="1" flag="0" option="0"/>
+		<FIELD088 length="16" type="1" flag="0" option="0"/>
+		<FIELD089 length="16" type="1" flag="0" option="0"/>
+		<FIELD090 length="0" type="0" flag="0" option="0"/>
+		<FIELD091 length="0" type="0" flag="0" option="0"/>
+		<FIELD092 length="0" type="0" flag="0" option="0"/>
+		<FIELD093 length="0" type="0" flag="0" option="0"/>
+		<FIELD094 length="0" type="0" flag="0" option="0"/>
+		<FIELD095 length="0" type="0" flag="0" option="0"/>
+		<FIELD096 length="0" type="0" flag="0" option="0"/>
+		<FIELD097 length="17" type="1" flag="0" option="0"/>
+		<FIELD098 length="25" type="0" flag="0" option="0"/>
+		<FIELD099 length="11" type="1" flag="1" option="0"/>
+		<FIELD100 length="99" type="1" flag="4" option="0"/>
+		<FIELD101 length="0" type="0" flag="0" option="0"/>
+		<FIELD102 length="99" type="0" flag="1" option="0"/>
+		<FIELD103 length="99" type="0" flag="1" option="0"/>
+		<FIELD104 length="0" type="0" flag="0" option="0"/>
+		<FIELD105 length="0" type="0" flag="0" option="0"/>
+		<FIELD106 length="0" type="0" flag="0" option="0"/>
+		<FIELD107 length="0" type="0" flag="0" option="0"/>
+		<FIELD108 length="0" type="0" flag="0" option="0"/>
+		<FIELD109 length="0" type="0" flag="0" option="0"/>
+		<FIELD110 length="0" type="0" flag="0" option="0"/>
+		<FIELD111 length="0" type="0" flag="0" option="0"/>
+		<FIELD112 length="0" type="0" flag="0" option="0"/>
+		<FIELD113 length="0" type="0" flag="0" option="0"/>
+		<FIELD114 length="0" type="0" flag="0" option="0"/>
+		<FIELD115 length="0" type="0" flag="0" option="0"/>
+		<FIELD116 length="0" type="0" flag="0" option="0"/>
+		<FIELD117 length="0" type="0" flag="0" option="0"/>
+		<FIELD118 length="0" type="0" flag="0" option="0"/>
+		<FIELD119 length="0" type="0" flag="0" option="0"/>
+		<FIELD120 length="0" type="0" flag="0" option="0"/>
+		<FIELD121 length="999" type="1" flag="5" option="0"/>
+		<FIELD122 length="0" type="0" flag="0" option="0"/>
+		<FIELD123 length="0" type="0" flag="0" option="0"/>
+		<FIELD124 length="0" type="0" flag="0" option="0"/>
+		<FIELD125 length="0" type="0" flag="0" option="0"/>
+		<FIELD126 length="0" type="0" flag="0" option="0"/>
+		<FIELD127 length="0" type="0" flag="0" option="0"/>
+		<FIELD128 length="8" type="1" flag="0" option="0"/>
+  </FIELD_SETTING>
+  <!-- 数据包的加解密算法 UBC 0,ECB 1,X99 2;算法-->
+  <ADDITIONAL>
+		<Mac>0</Mac>
+		<MSGTYPE  index = "1" offset="0" len="0" flag="1"/>
+		<BITMAP   index = "2" offset="0" len="0" flag="1"/>
+		<FIELD002 index = "3" offset="0" len="0" flag="1"/>
+		<FIELD003 index = "4" offset="0" len="0" flag="1"/>
+		<FIELD004 index = "5" offset="0" len="0" flag="1"/>
+		<FIELD005 index = "6" offset="0" len="0" flag="1"/>
+		<FIELD006 index = "7" offset="0" len="0" flag="1"/>
+		<FIELD007 index = "8" offset="0" len="0" flag="1"/>
+		<FIELD008 index = "9" offset="0" len="0" flag="1"/>
+		<FIELD009 index = "10" offset="0" len="0" flag="1"/>
+		<FIELD010 index = "11" offset="0" len="0" flag="1"/>
+		<FIELD011 index = "12" offset="0" len="0" flag="1"/>
+		<FIELD012 index = "13" offset="0" len="0" flag="1"/>
+		<FIELD013 index = "14" offset="0" len="0" flag="1"/>
+		<FIELD014 index = "15" offset="0" len="0" flag="1"/>
+		<FIELD015 index = "16" offset="0" len="0" flag="1"/>
+		<FIELD016 index = "17" offset="0" len="0" flag="1"/>
+		<FIELD017 index = "18" offset="0" len="0" flag="1"/>
+		<FIELD018 index = "19" offset="0" len="0" flag="1"/>
+		<FIELD019 index = "20" offset="0" len="0" flag="1"/>
+		<FIELD020 index = "21" offset="0" len="0" flag="1"/>
+		<FIELD021 index = "22" offset="0" len="0" flag="1"/>
+		<FIELD022 index = "23" offset="0" len="0" flag="1"/>
+		<FIELD023 index = "24" offset="0" len="0" flag="1"/>
+		<FIELD024 index = "25" offset="0" len="0" flag="1"/>
+		<FIELD025 index = "26" offset="0" len="0" flag="1"/>
+		<FIELD026 index = "27" offset="0" len="0" flag="1"/>
+		<FIELD027 index = "28" offset="0" len="0" flag="1"/>
+		<FIELD028 index = "29" offset="0" len="0" flag="1"/>
+		<FIELD029 index = "30" offset="0" len="0" flag="1"/>
+		<FIELD030 index = "31" offset="0" len="0" flag="1"/>
+		<FIELD031 index = "32" offset="0" len="0" flag="1"/>
+		<FIELD032 index = "33" offset="0" len="0" flag="1"/>
+		<FIELD033 index = "34" offset="0" len="0" flag="1"/>
+		<FIELD034 index = "35" offset="0" len="0" flag="1"/>
+		<FIELD035 index = "36" offset="0" len="0" flag="1"/>
+		<FIELD036 index = "37" offset="0" len="0" flag="1"/>
+		<FIELD037 index = "38" offset="0" len="0" flag="1"/>
+		<FIELD038 index = "39" offset="0" len="0" flag="1"/>
+		<FIELD039 index = "40" offset="0" len="0" flag="1"/>
+		<FIELD040 index = "41" offset="0" len="0" flag="1"/>
+		<FIELD041 index = "42" offset="0" len="0" flag="1"/>
+		<FIELD042 index = "43" offset="0" len="0" flag="1"/>
+		<FIELD043 index = "44" offset="0" len="0" flag="1"/>
+		<FIELD044 index = "45" offset="0" len="0" flag="1"/>
+		<FIELD045 index = "46" offset="0" len="0" flag="1"/>
+		<FIELD046 index = "47" offset="0" len="0" flag="1"/>
+		<FIELD047 index = "48" offset="0" len="0" flag="1"/>
+		<FIELD048 index = "49" offset="0" len="0" flag="1"/>
+		<FIELD049 index = "50" offset="0" len="0" flag="1"/>
+		<FIELD050 index = "51" offset="0" len="0" flag="1"/>
+		<FIELD051 index = "52" offset="0" len="0" flag="1"/>
+		<FIELD052 index = "53" offset="0" len="0" flag="1"/>
+		<FIELD053 index = "54" offset="0" len="0" flag="1"/>
+		<FIELD054 index = "55" offset="0" len="0" flag="1"/>
+		<FIELD055 index = "56" offset="0" len="0" flag="1"/>
+		<FIELD056 index = "57" offset="0" len="0" flag="1"/>
+		<FIELD057 index = "58" offset="0" len="0" flag="1"/>
+		<FIELD058 index = "59" offset="0" len="0" flag="1"/>
+		<FIELD059 index = "60" offset="0" len="0" flag="1"/>
+		<FIELD060 index = "61" offset="0" len="0" flag="1"/>
+		<FIELD061 index = "62" offset="0" len="0" flag="1"/>
+		<FIELD062 index = "63" offset="0" len="0" flag="1"/>
+		<FIELD063 index = "64" offset="0" len="0" flag="1"/>
+  </ADDITIONAL>
+
+	<!-- 银联的POS程序在报文前面带上6个字节的版本信息，普通POS设置为0 ,银联设置设置为6 -->
+	<PACKET_OFFSET value="46"/>
+</root>

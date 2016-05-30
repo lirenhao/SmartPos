@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/common_bg"
+    android:orientation="vertical" >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dp0"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical" >
+
+        <TextView
+			android:id="@+id/tv_input_pin_amount"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:gravity="center"
+			android:singleLine="true"
+			android:textColor="#f00"
+			android:textSize="@dimen/sp30" />
+        
+        <TextView
+            android:id="@+id/input_tip_msg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/dp12"
+            android:singleLine="true"
+            android:textColor="#333"
+            android:textSize="@dimen/sp20" />
+        
+        <TextView
+            android:id="@+id/input_pin_txt"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/dp40"
+            android:layout_marginLeft="@dimen/dp13"
+            android:layout_marginRight="@dimen/dp13"
+            android:layout_marginTop="@dimen/dp12"
+            android:background="#fff"
+            android:clickable="false"
+            android:gravity="center"
+            android:textSize="@dimen/sp26" 
+            android:textColor="#333"/>
+    </LinearLayout>
+
+    <TableLayout android:id="@+id/keyboard_layout"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/keyboard_number_height_91"
+        android:stretchColumns="*" >
+
+        <TableRow
+            android:layout_height="@dimen/dp0"
+            android:layout_weight="1" >
+
+            <ImageView
+                android:id="@+id/iv_1"
+                android:layout_width="@dimen/dp1"
+                android:layout_height="wrap_content"
+                android:scaleType="fitXY"
+                android:src="@drawable/keyboard_1" />
+
+            <ImageView
+                android:id="@+id/iv_2"
+                android:layout_width="@dimen/dp1"
+                android:layout_height="wrap_content"
+                android:scaleType="fitXY"
+                android:src="@drawable/keyboard_2" />
+
+            <ImageView
+                android:id="@+id/iv_3"
+                android:layout_width="@dimen/dp1"
+                android:layout_height="wrap_content"
+                android:scaleType="fitXY"
+                android:src="@drawable/keyboard_3" />
+
+            <ImageView
+                android:id="@+id/iv_cancel"
+                android:layout_width="@dimen/dp1"
+                android:layout_height="wrap_content"
+                android:scaleType="fitXY"
+                android:src="@drawable/keyboard_cancel" />
+        </TableRow>
+
+        <TableRow
+            android:layout_height="@dimen/dp0"
+            android:layout_weight="1" >
+
+            <ImageView
+                android:id="@+id/iv_4"
+                android:layout_width="@dimen/dp1"
+                android:layout_height="wrap_content"
+                android:scaleType="fitXY"
+                android:src="@drawable/keyboard_4" />
+
+            <ImageView
+                android:id="@+id/iv_5"
+                android:layout_width="@dimen/dp1"
+                android:layout_height="wrap_content"
+                android:scaleType="fitXY"
+                android:src="@drawable/keyboard_5" />
+
+            <ImageView
+                android:id="@+id/iv_6"
+                android:layout_width="@dimen/dp1"
+                android:layout_height="wrap_content"
+                android:scaleType="fitXY"
+                android:src="@drawable/keyboard_6" />
+
+            <ImageView
+                android:id="@+id/iv_backspeace"
+                android:layout_width="@dimen/dp1"
+                android:layout_height="wrap_content"
+                android:scaleType="fitXY"
+                android:src="@drawable/keyboard_bacespeace" />
+        </TableRow>
+
+        <TableRow
+            android:layout_height="@dimen/dp0"
+            android:layout_weight="2" >
+
+            <TableLayout
+                android:layout_width="@dimen/dp1"
+                android:layout_height="match_parent"
+                android:layout_span="3"
+                android:stretchColumns="*" >
+
+                <TableRow
+                    android:layout_height="@dimen/dp0"
+                    android:layout_weight="1" >
+
+                    <ImageView
+                        android:id="@+id/iv_7"
+                        android:layout_width="@dimen/dp1"
+                        android:layout_height="wrap_content"
+                        android:scaleType="fitXY"
+                        android:src="@drawable/keyboard_7" />
+
+                    <ImageView
+                        android:id="@+id/iv_8"
+                        android:layout_width="@dimen/dp1"
+                        android:layout_height="wrap_content"
+                        android:scaleType="fitXY"
+                        android:src="@drawable/keyboard_8" />
+
+                    <ImageView
+                        android:id="@+id/iv_9"
+                        android:layout_width="@dimen/dp1"
+                        android:layout_height="wrap_content"
+                        android:scaleType="fitXY"
+                        android:src="@drawable/keyboard_9" />
+                </TableRow>
+
+                <TableRow
+                    android:layout_height="@dimen/dp0"
+                    android:layout_weight="1" >
+
+                    <ImageView
+                        android:id="@+id/iv_star"
+                        android:layout_width="@dimen/dp1"
+                        android:layout_height="wrap_content"
+                        android:scaleType="fitXY"
+                        android:src="@drawable/keyboard_number_null" />
+
+                    <ImageView
+                        android:id="@+id/iv_0"
+                        android:layout_width="@dimen/dp1"
+                        android:layout_height="wrap_content"
+                        android:scaleType="fitXY"
+                        android:src="@drawable/keyboard_0" />
+
+                    <ImageView
+                        android:id="@+id/iv_well"
+                        android:layout_width="@dimen/dp1"
+                        android:layout_height="wrap_content"
+                        android:scaleType="fitXY"
+                        android:src="@drawable/keyboard_number_null" />
+                </TableRow>
+            </TableLayout>
+
+            <ImageView
+                android:id="@+id/iv_enter"
+                android:layout_width="@dimen/dp1"
+                android:layout_height="match_parent"
+                android:scaleType="fitXY"
+                android:src="@drawable/keyboard_confirm" />
+        </TableRow>
+    </TableLayout>
+
+</LinearLayout>
