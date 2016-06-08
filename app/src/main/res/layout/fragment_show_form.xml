@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:gravity="center"
+              android:background="@color/common_bg"
+              android:orientation="vertical">
+
+    <LinearLayout android:layout_weight="1.0"
+                  android:layout_width="fill_parent"
+                  android:layout_height="fill_parent"
+                  android:orientation="vertical"
+                  android:gravity="center">
+        <TextView android:text="@string/show_from_msg"
+                  android:textSize="@dimen/sp20"
+                  android:layout_width="fill_parent"
+                  android:layout_height="wrap_content"
+                  android:gravity="center"/>
+
+    </LinearLayout>
+
+    <LinearLayout android:layout_width="fill_parent"
+                  android:layout_height="@dimen/dp40"
+                  android:orientation="horizontal"
+                  android:gravity="center">
+        <TextView android:layout_width="@dimen/dp30"
+                  android:layout_height="fill_parent"/>
+
+        <TextView android:text="卡号"
+                  android:textSize="@dimen/sp20"
+                  android:layout_width="@dimen/dp100"
+                  android:layout_height="fill_parent"
+                  android:gravity="center|left"/>
+
+        <TextView android:id="@+id/transCardNo"
+                  android:textSize="@dimen/sp20"
+                  android:layout_width="fill_parent"
+                  android:layout_height="fill_parent"
+                  android:gravity="center|left"/>
+
+    </LinearLayout>
+
+    <LinearLayout android:layout_width="fill_parent"
+                  android:layout_height="@dimen/dp40"
+                  android:orientation="horizontal"
+                  android:gravity="center">
+        <TextView android:layout_width="@dimen/dp30"
+                  android:layout_height="fill_parent"/>
+
+        <TextView android:text="凭证号"
+                  android:textSize="@dimen/sp20"
+                  android:layout_width="@dimen/dp100"
+                  android:layout_height="fill_parent"
+                  android:gravity="center|left"/>
+
+        <TextView android:id="@+id/transProofNo"
+                  android:textSize="@dimen/sp20"
+                  android:layout_width="fill_parent"
+                  android:layout_height="fill_parent"
+                  android:gravity="center|left"/>
+
+    </LinearLayout>
+
+
+    <LinearLayout android:layout_width="fill_parent"
+                  android:layout_height="@dimen/dp40"
+                  android:orientation="horizontal"
+                  android:gravity="center">
+        <TextView android:layout_width="@dimen/dp30"
+                  android:layout_height="fill_parent"/>
+
+        <TextView android:text="授权码"
+                  android:textSize="@dimen/sp20"
+                  android:layout_width="@dimen/dp100"
+                  android:layout_height="fill_parent"
+                  android:gravity="center|left"/>
+
+        <TextView android:id="@+id/transAuthCode"
+                  android:textSize="@dimen/sp20"
+                  android:layout_width="fill_parent"
+                  android:layout_height="fill_parent"
+                  android:gravity="center|left"/>
+
+    </LinearLayout>
+
+    <LinearLayout android:layout_width="fill_parent"
+                  android:layout_height="@dimen/dp40"
+                  android:orientation="horizontal"
+                  android:gravity="center">
+        <TextView android:layout_width="@dimen/dp30"
+                  android:layout_height="fill_parent"/>
+
+        <TextView android:text="参考号"
+                  android:textSize="@dimen/sp20"
+                  android:layout_width="@dimen/dp100"
+                  android:layout_height="fill_parent"
+                  android:gravity="center|left"/>
+
+        <TextView android:id="@+id/transReferenceNumber"
+                  android:textSize="@dimen/sp20"
+                  android:layout_width="fill_parent"
+                  android:layout_height="fill_parent"
+                  android:gravity="center|left"/>
+
+    </LinearLayout>
+
+    <LinearLayout android:layout_width="fill_parent"
+                  android:layout_height="@dimen/dp40"
+                  android:orientation="horizontal"
+                  android:gravity="center">
+        <TextView android:layout_width="@dimen/dp30"
+                  android:layout_height="fill_parent"/>
+
+        <TextView android:text="时间日期"
+                  android:textSize="@dimen/sp20"
+                  android:layout_width="@dimen/dp100"
+                  android:layout_height="fill_parent"
+                  android:gravity="center|left"/>
+
+        <TextView android:id="@+id/transDateTime"
+                  android:textSize="@dimen/sp20"
+                  android:layout_width="fill_parent"
+                  android:layout_height="fill_parent"
+                  android:gravity="center|left"/>
+
+    </LinearLayout>
+
+    <LinearLayout android:layout_width="fill_parent"
+                  android:layout_height="@dimen/dp100"
+                  android:orientation="horizontal"
+                  android:gravity="center">
+
+        <TextView android:layout_width="@dimen/dp30"
+                  android:layout_height="fill_parent"/>
+
+        <TextView android:text="金额"
+                  android:textSize="@dimen/sp20"
+                  android:layout_width="@dimen/dp100"
+                  android:layout_height="fill_parent"
+                  android:gravity="center|left"/>
+
+        <TextView android:id="@+id/transAmount"
+                  android:textSize="@dimen/sp20"
+                  android:layout_width="fill_parent"
+                  android:layout_height="fill_parent"
+                  android:gravity="center|left"/>
+
+    </LinearLayout>
+
+    <RelativeLayout android:layout_weight="1.0"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:gravity="top">
+        <Button android:id="@+id/finish"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="确定"
+                android:layout_gravity="center"/>
+    </RelativeLayout>
+</LinearLayout>

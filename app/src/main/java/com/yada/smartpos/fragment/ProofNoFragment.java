@@ -5,6 +5,7 @@ import android.app.FragmentManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,9 +16,10 @@ import com.yada.smartpos.R;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
 
-import java.math.BigDecimal;
-
-public class AmountFragment extends Fragment implements View.OnClickListener {
+/**
+ * 输入原凭证号
+ */
+public class ProofNoFragment extends Fragment implements View.OnClickListener {
 
     private MainActivity mainActivity;
     private FragmentManager manager;
@@ -26,7 +28,7 @@ public class AmountFragment extends Fragment implements View.OnClickListener {
     private TextView inputTxt;
     private String inputValue = "";
 
-    public AmountFragment(MainActivity mainActivity) {
+    public ProofNoFragment(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
         handler = new Handler(mainActivity.getMainLooper()) {
             @Override
@@ -80,8 +82,9 @@ public class AmountFragment extends Fragment implements View.OnClickListener {
         ivEnter.setOnClickListener(this);
 
         TextView inputMsg = (TextView) view.findViewById(R.id.input_tip_msg);
-        inputMsg.setText(R.string.money_input);
+        inputMsg.setText(R.string.proofNo_input);
         inputTxt = (TextView) view.findViewById(R.id.input_pin_txt);
+        inputTxt.setGravity(Gravity.LEFT);
         inputTxt.setText(setInputTxt());
 
         return view;
@@ -146,10 +149,10 @@ public class AmountFragment extends Fragment implements View.OnClickListener {
                 break;
             case R.id.iv_enter:
                 if (inputValue.length() > 0) {
-                    ((App) (mainActivity).getApplication()).getTransData().setAmount(new BigDecimal(inputValue));
-                    mainActivity.getAmountWaitThreat().notifyThread();
+                    ((App) (mainActivity).getApplication()).getTransData().setOldProofNo(inputValue);
+                    mainActivity.getProofNoWaitThreat().notifyThread();
                 } else {
-                    Toast.makeText(mainActivity, "请输入金额！", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(mainActivity, "请输入原凭证号！", Toast.LENGTH_SHORT).show();
                 }
                 break;
             default:
@@ -158,17 +161,6 @@ public class AmountFragment extends Fragment implements View.OnClickListener {
     }
 
     private String setInputTxt() {
-        StringBuilder inputTxt = new StringBuilder();
-        if (inputValue.length() > 2) {
-            inputTxt.append("￥").append(inputValue.substring(0, inputValue.length() - 2))
-                    .append(".").append(inputValue.substring(inputValue.length() - 2));
-        } else if (inputValue.length() == 2) {
-            inputTxt.append("￥0.").append(inputValue);
-        } else if (inputValue.length() == 1) {
-            inputTxt.append("￥0.0").append(inputValue);
-        } else {
-            inputTxt.append("￥0.00");
-        }
-        return inputTxt.toString();
+        return "原凭证号:  " + inputValue;
     }
 }

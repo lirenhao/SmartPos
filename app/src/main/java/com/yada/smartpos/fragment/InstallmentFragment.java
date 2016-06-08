@@ -1,7 +1,9 @@
 package com.yada.smartpos.fragment;
 
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -15,18 +17,18 @@ import com.yada.smartpos.R;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
 
-import java.math.BigDecimal;
-
-public class AmountFragment extends Fragment implements View.OnClickListener {
+public class InstallmentFragment extends Fragment implements View.OnClickListener {
 
     private MainActivity mainActivity;
     private FragmentManager manager;
     private Handler handler;
+    private AlertDialog.Builder costDialog;
+    private AlertDialog.Builder planDialog;
 
     private TextView inputTxt;
     private String inputValue = "";
 
-    public AmountFragment(MainActivity mainActivity) {
+    public InstallmentFragment(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
         handler = new Handler(mainActivity.getMainLooper()) {
             @Override
@@ -46,6 +48,49 @@ public class AmountFragment extends Fragment implements View.OnClickListener {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         manager = getFragmentManager();
+
+        costDialog = new AlertDialog.Builder(mainActivity);
+        costDialog.setTitle("手续费是否分期");
+        costDialog.setSingleChoiceItems(new String[]{"是", "否"}, 0, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // TODO 是否分期如何设置
+            }
+        });
+        costDialog.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                manager.popBackStack();
+            }
+        });
+        costDialog.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                mainActivity.getInstallmentWaitThreat().notifyThread();
+            }
+        });
+
+        final String[] planIds = new String[] { "A025", "B014", "IP03", "R204" , "T015", "LA02", "IP00"};
+        planDialog = new AlertDialog.Builder(mainActivity);
+        planDialog.setTitle("计划ID");
+        planDialog.setSingleChoiceItems(planIds, 0, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                ((App) (mainActivity).getApplication()).getTransData().setInstallmentPlanId(planIds[which]);
+            }
+        });
+        planDialog.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                manager.popBackStack();
+            }
+        });
+        planDialog.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                costDialog.create().show();
+            }
+        });
     }
 
     @Override
@@ -80,7 +125,7 @@ public class AmountFragment extends Fragment implements View.OnClickListener {
         ivEnter.setOnClickListener(this);
 
         TextView inputMsg = (TextView) view.findViewById(R.id.input_tip_msg);
-        inputMsg.setText(R.string.money_input);
+        inputMsg.setText(R.string.installmentNumber_input);
         inputTxt = (TextView) view.findViewById(R.id.input_pin_txt);
         inputTxt.setText(setInputTxt());
 
@@ -145,11 +190,11 @@ public class AmountFragment extends Fragment implements View.OnClickListener {
                 msg.sendToTarget();
                 break;
             case R.id.iv_enter:
-                if (inputValue.length() > 0) {
-                    ((App) (mainActivity).getApplication()).getTransData().setAmount(new BigDecimal(inputValue));
-                    mainActivity.getAmountWaitThreat().notifyThread();
+                if (inputValue.length() > 0 && inputValue.length() <= 2) {
+                    ((App) (mainActivity).getApplication()).getTransData().setInstallmentNumber(inputValue);
+                    planDialog.create().show();
                 } else {
-                    Toast.makeText(mainActivity, "请输入金额！", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(mainActivity, "请输入最多两位的分期期数！", Toast.LENGTH_SHORT).show();
                 }
                 break;
             default:
@@ -158,17 +203,6 @@ public class AmountFragment extends Fragment implements View.OnClickListener {
     }
 
     private String setInputTxt() {
-        StringBuilder inputTxt = new StringBuilder();
-        if (inputValue.length() > 2) {
-            inputTxt.append("￥").append(inputValue.substring(0, inputValue.length() - 2))
-                    .append(".").append(inputValue.substring(inputValue.length() - 2));
-        } else if (inputValue.length() == 2) {
-            inputTxt.append("￥0.").append(inputValue);
-        } else if (inputValue.length() == 1) {
-            inputTxt.append("￥0.0").append(inputValue);
-        } else {
-            inputTxt.append("￥0.00");
-        }
-        return inputTxt.toString();
+        return inputValue;
     }
 }

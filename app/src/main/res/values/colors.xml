@@ -6,4 +6,6 @@
     <color name="translucent">#99000000</color>
     <color name="pb_timeout_bg">#ffa8a8a8</color>
     <color name="main_menu_item_press">#ffe5e5e5</color>
+    <color name="text_10">#333333</color>
+    <color name="text_11">#999999</color>
 </resources>

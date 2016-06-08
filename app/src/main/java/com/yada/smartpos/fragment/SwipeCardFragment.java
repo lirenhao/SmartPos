@@ -16,6 +16,7 @@ import com.newland.mtype.module.common.emv.EmvTransController;
 import com.newland.mtype.module.common.light.LightType;
 import com.newland.mtype.module.common.swiper.SwipResult;
 import com.newland.mtype.module.common.swiper.SwiperReadModel;
+import com.newland.mtype.util.ISOUtils;
 import com.yada.smartpos.R;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
@@ -40,9 +41,6 @@ public class SwipeCardFragment extends Fragment {
     private CardReaderModule cardReader;
     private IndicatorLightModule indicatorLight;
 
-    private EmvModule emvModule;
-    private EmvTransController controller;
-
     public SwipeCardFragment(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
     }
@@ -52,8 +50,6 @@ public class SwipeCardFragment extends Fragment {
         super.onCreate(savedInstanceState);
         cardReader = new CardReaderModuleImpl();
         indicatorLight = new IndicatorLightModuleImpl();
-        emvModule = new EmvModuleImpl();
-
     }
 
     @Override
@@ -72,15 +68,28 @@ public class SwipeCardFragment extends Fragment {
                     public void onEvent(OpenCardReaderEvent openCardReaderEvent, Handler handler) {
                         if (openCardReaderEvent.isSuccess()) {
                             indicatorLight.turnOffLight(new LightType[]{LightType.BLUE_LIGHT});
+                            ((App) mainActivity.getApplication()).getTransData().
+                                    setCardType(openCardReaderEvent.getOpenCardReaderResult().getResponseCardTypes()[0]);
                             EmvTransListener transListener = new SimpleTransferListener(mainActivity);
-                            switch (openCardReaderEvent.getOpenCardReaderResult().getResponseCardTypes()[0]) {
+                            EmvModule emvModule = new EmvModuleImpl();
+                            emvModule.initEmvModule(mainActivity);
+                            EmvTransController controller = emvModule.getEmvTransController(transListener);
+                            switch (((App) mainActivity.getApplication()).getTransData().getCardType()) {
                                 case MSCARD:
                                     SwiperModule swiper = new SwiperModuleImpl();
                                     try {
-                                        SwipResult swipResult = swiper.readPlainResult(new SwiperReadModel[] {
-                                                SwiperReadModel.READ_SECOND_TRACK, SwiperReadModel.READ_THIRD_TRACK });
-                                        transListener.onSwipeFinished(swipResult);
+                                        SwipResult swipResult = swiper.readPlainResult(new SwiperReadModel[]{
+                                                SwiperReadModel.READ_SECOND_TRACK, SwiperReadModel.READ_THIRD_TRACK});
+                                        ((App) mainActivity.getApplication()).getTransData().setAccount(swipResult.getAccount().getAcctNo());
+                                        if (swipResult.getSecondTrackData() != null)
+                                            ((App) mainActivity.getApplication()).getTransData().setSecondTrackData(
+                                                    ISOUtils.hexString(ISOUtils.str2bcd(new String(swipResult.getSecondTrackData()), false)));
+                                        if (swipResult.getThirdTrackData() != null)
+                                            ((App) mainActivity.getApplication()).getTransData().setThirdTrackData(
+                                                    ISOUtils.hexString(swipResult.getThirdTrackData()));
+                                        mainActivity.getSwipeCardWaitThreat().notifyThread();
                                     } catch (Exception e) {
+                                        // 读卡异常重新读卡
                                         mainActivity.showMessage(e.getMessage(), Const.MessageTag.ERROR);
                                         Message message = mainActivity.getFragmentHandler().obtainMessage(2);
                                         message.obj = "swipeCard";
@@ -88,20 +97,16 @@ public class SwipeCardFragment extends Fragment {
                                     }
                                     break;
                                 case ICCARD:
-                                    emvModule.initEmvModule(mainActivity);
-                                    controller = emvModule.getEmvTransController(transListener);
-                                    controller.startEmv(ProcessingCode.GOODS_AND_SERVICE,
-                                            InnerProcessingCode.USING_STANDARD_PROCESSINGCODE,
-                                            ((App) mainActivity.getApplication()).getAmt().movePointLeft(2),
+                                    controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.USING_STANDARD_PROCESSINGCODE,
+                                            ((App) mainActivity.getApplication()).getTransData().getAmount().movePointLeft(2),
                                             new BigDecimal("0"), true);
+                                    mainActivity.getSwipeCardWaitThreat().notifyThread();
                                     break;
                                 case RFCARD:
-                                    emvModule.initEmvModule(mainActivity);
-                                    controller = emvModule.getEmvTransController(new SimpleTransferListener(mainActivity));
-                                    controller.startEmv(ProcessingCode.GOODS_AND_SERVICE,
-                                            InnerProcessingCode.EC_CONSUMPTION,
-                                            ((App) mainActivity.getApplication()).getAmt().movePointLeft(2),
+                                    controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.EC_CONSUMPTION,
+                                            ((App) mainActivity.getApplication()).getTransData().getAmount().movePointLeft(2),
                                             new BigDecimal("0"), true);
+                                    mainActivity.getSwipeCardWaitThreat().notifyThread();
                                     break;
                                 default:
                                     break;

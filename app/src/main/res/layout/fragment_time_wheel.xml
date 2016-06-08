@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:background="@color/common_bg"
+              android:orientation="vertical">
+
+    <TextView
+            android:text="请选择原交易时间"
+            android:textSize="@dimen/sp20"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"/>
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingTop="18dp"
+            android:layout_gravity="center"
+            android:paddingBottom="18dp"
+            android:layout_marginLeft="15dp"
+            android:gravity="center"
+            android:layout_marginRight="15dp">
+        <TextView
+                android:text="时"
+                android:textSize="@dimen/sp20"
+                android:layout_weight="2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="15dp"
+                android:layout_gravity="center"
+                android:gravity="center"/>
+
+        <TextView
+                android:text="分"
+                android:textSize="@dimen/sp20"
+                android:layout_weight="2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="15dp"
+                android:layout_gravity="center"
+                android:gravity="center"/>
+
+        <TextView
+                android:text="秒"
+                android:textSize="@dimen/sp20"
+                android:layout_weight="2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="15dp"
+                android:layout_gravity="center"
+                android:gravity="center"/>
+    </LinearLayout>
+    <LinearLayout
+            android:id="@+id/date_view_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingTop="18dp"
+            android:layout_gravity="center"
+            android:paddingBottom="18dp"
+            android:layout_marginLeft="15dp"
+            android:gravity="center"
+            android:layout_marginRight="15dp">
+
+        <com.yada.smartpos.widget.WheelView
+                android:id="@+id/hour_wv"
+                android:layout_width="wrap_content"
+                android:layout_weight="2"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"/>
+
+        <com.yada.smartpos.widget.WheelView
+                android:id="@+id/minute_wv"
+                android:layout_width="wrap_content"
+                android:layout_weight="2"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"/>
+
+        <com.yada.smartpos.widget.WheelView
+                android:id="@+id/second_wv"
+                android:layout_width="wrap_content"
+                android:layout_weight="2"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"/>
+    </LinearLayout>
+
+    <Button
+            android:id="@+id/timeNext"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="下一步"/>
+
+</LinearLayout>

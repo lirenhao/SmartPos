@@ -35,6 +35,17 @@ public class MainActivity extends Activity {
     private TcpClient client;
     private WaitThreat waitThreat;
 
+    private WaitThreat amountWaitThreat = new WaitThreat();
+    private WaitThreat swipeCardWaitThreat = new WaitThreat();
+    private WaitThreat inputPinWaitThreat = new WaitThreat();
+    private WaitThreat proofNoWaitThreat = new WaitThreat();
+    private WaitThreat authCodeWaitThreat = new WaitThreat();
+    private WaitThreat showFormWaitThreat = new WaitThreat();
+    private WaitThreat installmentWaitThreat = new WaitThreat();
+    private WaitThreat dateWheelWaitThreat = new WaitThreat();
+    private WaitThreat timeWheelWaitThreat = new WaitThreat();
+    private WaitThreat orderWaitThreat = new WaitThreat();
+
     public Handler getFragmentHandler() {
         return fragmentHandler;
     }
@@ -52,21 +63,55 @@ public class MainActivity extends Activity {
         return waitThreat;
     }
 
-    private final String MAIN_KEY = "8FF97B609D81C5EA4AE715BEB2F9B57D";// 主密钥预设输入值
-    private final String WORKINGKEY_DATA_PIN = "AD02BA8523B58C0275FDC80E4CC75E54";// PIN秘钥预设输入值
-    private final String WORKINGKEY_DATA_TRACK = "DBFE96D0A5F09D24DBFE96D0A5F09D24";// TRACK秘钥预设输入值
-    private final String WORKINGKEY_DATA_MAC = "2C89EF977E2F92B1";// MAC秘钥预设输入值
+    public WaitThreat getAmountWaitThreat() {
+        return amountWaitThreat;
+    }
+
+    public WaitThreat getSwipeCardWaitThreat() {
+        return swipeCardWaitThreat;
+    }
+
+    public WaitThreat getInputPinWaitThreat() {
+        return inputPinWaitThreat;
+    }
+
+    public WaitThreat getProofNoWaitThreat() {
+        return proofNoWaitThreat;
+    }
+
+    public WaitThreat getAuthCodeWaitThreat() {
+        return authCodeWaitThreat;
+    }
+
+    public WaitThreat getShowFormWaitThreat() {
+        return showFormWaitThreat;
+    }
+
+    public WaitThreat getInstallmentWaitThreat() {
+        return installmentWaitThreat;
+    }
+
+    public WaitThreat getDateWheelWaitThreat() {
+        return dateWheelWaitThreat;
+    }
+
+    public WaitThreat getTimeWheelWaitThreat() {
+        return timeWheelWaitThreat;
+    }
+
+    public WaitThreat getOrderWaitThreat() {
+        return orderWaitThreat;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
         mainActivity = this;
         k21Device = new N900Device(this);
         iso8583 = new ISO8583(this);
         iso8583.loadXmlFile("CUPS8583.xml");
-        client = new TcpClient(new InetSocketAddress("10.2.56.70", 1000),
+        client = new TcpClient(new InetSocketAddress("127.0.0.1", 6789),
                 new FixLenPackageSplitterFactory(2, false), 20000);
         waitThreat = new WaitThreat();
         // 初始化设备
@@ -95,6 +140,30 @@ public class MainActivity extends Activity {
                                 .addToBackStack(null).commitAllowingStateLoss();
                         break;
                     case 4:
+                        tx.add(R.id.main, new ProofNoFragment(mainActivity), msg.obj.toString())
+                                .addToBackStack(null).commitAllowingStateLoss();
+                        break;
+                    case 5:
+                        tx.add(R.id.main, new AuthCodeFragment(mainActivity), msg.obj.toString())
+                                .addToBackStack(null).commitAllowingStateLoss();
+                        break;
+                    case 6:
+                        tx.add(R.id.main, new ShowFormFragment(mainActivity), msg.obj.toString())
+                                .addToBackStack(null).commitAllowingStateLoss();
+                        break;
+                    case 7:
+                        tx.add(R.id.main, new InstallmentFragment(mainActivity), msg.obj.toString())
+                                .addToBackStack(null).commitAllowingStateLoss();
+                        break;
+                    case 8:
+                        tx.add(R.id.main, new DateWheelFragment(mainActivity), msg.obj.toString())
+                                .addToBackStack(null).commitAllowingStateLoss();
+                        break;
+                    case 9:
+                        tx.add(R.id.main, new TimeWheelFragment(mainActivity), msg.obj.toString())
+                                .addToBackStack(null).commitAllowingStateLoss();
+                        break;
+                    case 100:
                         tx.add(R.id.main, new OrderFragment(mainActivity), "result")
                                 .addToBackStack(null).commitAllowingStateLoss();
                         break;
@@ -119,7 +188,7 @@ public class MainActivity extends Activity {
                 public void run() {
                     k21Device.initController();
                     k21Device.connectDevice();
-                    // 装载主密钥、工作密钥
+                    // 装载主密钥
                     initMainKey();
                     // 初始化EMV
                     initEmv();
@@ -132,19 +201,10 @@ public class MainActivity extends Activity {
 
     private void initMainKey() {
         PinInputModule pinInput = new PinInputModuleImpl();
-        int mkIndex = Const.MKIndexConst.DEFAULT_MK_INDEX;
         // 装载主密钥
+        String MAIN_KEY = "8FF97B609D81C5EA4AE715BEB2F9B57D";
         pinInput.loadMainKey(KekUsingType.MAIN_KEY, Const.MKIndexConst.DEFAULT_MK_INDEX,
                 ISOUtils.hex2byte(MAIN_KEY), null, 2);
-//        // 装载pin工作密钥
-//        pinInput.loadWorkingKey(WorkingKeyType.PININPUT, mkIndex, Const.PinWKIndexConst.DEFAULT_PIN_WK_INDEX,
-//                ISOUtils.hex2byte(WORKINGKEY_DATA_PIN), null);
-//        // 装载磁道工作密钥
-//        pinInput.loadWorkingKey(WorkingKeyType.DATAENCRYPT, mkIndex, Const.DataEncryptWKIndexConst.DEFAULT_TRACK_WK_INDEX,
-//                ISOUtils.hex2byte(WORKINGKEY_DATA_TRACK), null);
-//        // 装载mac工作密钥
-//        pinInput.loadWorkingKey(WorkingKeyType.MAC, mkIndex, Const.MacWKIndexConst.DEFAULT_MAC_WK_INDEX,
-//                ISOUtils.hex2byte(WORKINGKEY_DATA_MAC), null);
     }
 
     private void initEmv() {
@@ -170,8 +230,9 @@ public class MainActivity extends Activity {
         aidConfig.setNciccCVMLimit(new byte[]{0x00, 0x00, 0x00, 0x00, (byte) 0x80, 0x00});// 0xDF21
         aidConfig.setEcCapability(0);// 0xDF24
         aidConfig.setCoreConfigType(2);// 0xDF25
-        boolean addAIDResult = false;
-        addAIDResult = emvModule.addAID(aidConfig);
+        boolean addAIDResult = emvModule.addAID(aidConfig);
+        if (!addAIDResult)
+            mainActivity.showMessage("装载AID1错误！", Const.MessageTag.ERROR);
 
         AIDConfig aidConfig2 = new AIDConfig();
         aidConfig2.setAid(ISOUtils.hex2byte("A000000333010101"));// 0x9f06
@@ -192,9 +253,10 @@ public class MainActivity extends Activity {
         aidConfig2.setNciccCVMLimit(new byte[]{0x00, 0x00, 0x00, 0x00, (byte) 0x80, 0x00});// 0xDF21
         aidConfig2.setEcCapability(0);// 0xDF24
         aidConfig2.setCoreConfigType(2);// 0xDF25
-        boolean addAIDResult2 = false;
         emvModule.initEmvModule(mainActivity);
-        addAIDResult2 = emvModule.addAID(aidConfig2);
+        boolean addAIDResult2 = emvModule.addAID(aidConfig2);
+        if (!addAIDResult2)
+            mainActivity.showMessage("装载AID2错误！", Const.MessageTag.ERROR);
 
         AIDConfig aidConfig3 = new AIDConfig();
         aidConfig3.setAid(ISOUtils.hex2byte("A000000333010103"));// 0x9f06
@@ -215,9 +277,10 @@ public class MainActivity extends Activity {
         aidConfig3.setNciccCVMLimit(new byte[]{0x00, 0x00, 0x00, 0x00, (byte) 0x80, 0x00});// 0xDF21
         aidConfig3.setEcCapability(0);// 0xDF24
         aidConfig3.setCoreConfigType(2);// 0xDF25
-        boolean addAIDResult3 = false;
         emvModule.initEmvModule(mainActivity);
-        addAIDResult3 = emvModule.addAID(aidConfig3);
+        boolean addAIDResult3 = emvModule.addAID(aidConfig3);
+        if (!addAIDResult3)
+            mainActivity.showMessage("装载AID3错误！", Const.MessageTag.ERROR);
 
         AIDConfig aidConfig4 = new AIDConfig();
         aidConfig4.setAid(ISOUtils.hex2byte("A000000333010106"));// 0x9f06
@@ -239,9 +302,10 @@ public class MainActivity extends Activity {
         aidConfig4.setEcCapability(0);// 0xDF24
         aidConfig4.setCoreConfigType(2);// 0xDF25
 
-        boolean addAIDResult4 = false;
         emvModule.initEmvModule(mainActivity);
-        addAIDResult4 = emvModule.addAID(aidConfig4);
+        boolean addAIDResult4 = emvModule.addAID(aidConfig4);
+        if (!addAIDResult4)
+            mainActivity.showMessage("装载AID4错误！", Const.MessageTag.ERROR);
 
         // EMV添加公钥
         int P9f22_1 = 1;
@@ -249,8 +313,9 @@ public class MainActivity extends Activity {
         byte[] df04_2 = ISOUtils.hex2byte("000003");
         byte[] df03_2 = ISOUtils.hex2byte("E881E390675D44C2DD81234DCE29C3F5AB2297A0");
         CAPublicKey caKey = new CAPublicKey(P9f22_1, 1, 1, df02_2, df04_2, df03_2, "20091231");
-        boolean addCAPK = false;
-        addCAPK = emvModule.addCAPublicKey(new byte[]{(byte) 0xA0, 0x00, 0x00, 0x03, 0x33}, caKey);
+        boolean addCAPK = emvModule.addCAPublicKey(new byte[]{(byte) 0xA0, 0x00, 0x00, 0x03, 0x33}, caKey);
+        if (!addCAPK)
+            mainActivity.showMessage("装载CAPK错误！", Const.MessageTag.ERROR);
     }
 
     // 显示操作返回的信息
@@ -280,15 +345,19 @@ public class MainActivity extends Activity {
 
     // 线程等待、唤醒
     public class WaitThreat {
-        Object syncObj = new Object();
+        final Object syncObj = new Object();
 
-        void waitForRslt() throws InterruptedException {
+        public void waitForRslt() {
             synchronized (syncObj) {
-                syncObj.wait();
+                try {
+                    syncObj.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
-        void notifyThread() {
+        public void notifyThread() {
             synchronized (syncObj) {
                 syncObj.notify();
             }

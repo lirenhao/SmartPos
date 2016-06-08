@@ -1,7 +1,6 @@
 package com.yada.smartpos.fragment;
 
 import android.app.Fragment;
-import android.app.FragmentManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -12,6 +11,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import com.newland.mtype.event.DeviceEventListener;
 import com.newland.mtype.module.common.pin.*;
+import com.newland.mtype.util.ISOUtils;
 import com.yada.smartpos.R;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
@@ -24,8 +24,6 @@ import java.util.concurrent.TimeUnit;
 public class InputPinFragment extends Fragment {
 
     private MainActivity mainActivity;
-    private FragmentManager manager;
-    private Fragment fragment;
     private Handler handler;
 
     private ImageView iv0;
@@ -40,19 +38,17 @@ public class InputPinFragment extends Fragment {
     private ImageView iv9;
 
     private PinInputModule pinInput;
-    private TextView inputMsg;
     private TextView inputTxt;
     private int inputLen = 0;
 
     public InputPinFragment(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
-        fragment = this;
         handler = new Handler(mainActivity.getMainLooper()) {
             @Override
             public void handleMessage(Message msg) {
                 switch (msg.what) {
                     case 2: // 键盘输入
-                        StringBuffer buffer = new StringBuffer();
+                        StringBuilder buffer = new StringBuilder();
                         for (int i = 0; i < inputLen; i++) {
                             buffer.append(" * ");
                         }
@@ -68,7 +64,6 @@ public class InputPinFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        manager = getFragmentManager();
         pinInput = new PinInputModuleImpl();
     }
 
@@ -87,14 +82,15 @@ public class InputPinFragment extends Fragment {
         iv8 = (ImageView) view.findViewById(R.id.iv_8);
         iv9 = (ImageView) view.findViewById(R.id.iv_9);
 
-        inputMsg = (TextView) view.findViewById(R.id.input_tip_msg);
+        TextView inputMsg = (TextView) view.findViewById(R.id.input_tip_msg);
         inputMsg.setText(R.string.pin_input);
         inputTxt = (TextView) view.findViewById(R.id.input_pin_txt);
 
         getRandomKeyBoardNumber();
 
         pinInput.startK21StandPininput(null, new WorkingKey(Const.PinWKIndexConst.DEFAULT_PIN_WK_INDEX),
-                KeyManageType.MKSK, AccountInputType.USE_ACCOUNT, ((App) mainActivity.getApplication()).getCardNo(),
+                KeyManageType.MKSK, AccountInputType.USE_ACCOUNT,
+                ((App) mainActivity.getApplication()).getTransData().getAccount(),
                 6, null, new byte[]{'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F'},
                 PinConfirmType.ENABLE_ENTER_COMMANG, 60, TimeUnit.SECONDS, null, null, pinInputListener);
         return view;
@@ -157,16 +153,20 @@ public class InputPinFragment extends Fragment {
                 msg.sendToTarget();
             } else if (event.isUserCanceled()) {
                 // 取消
-                manager.popBackStack();
+                Message msg = mainActivity.getFragmentHandler().obtainMessage(0);
+                msg.obj = "menu";
+                msg.sendToTarget();
             } else if (event.isSuccess()) {
                 // 确定
                 if (event.getInputLen() == 0) {
-                    ((App) (mainActivity).getApplication()).setPin(new byte[6]);
+                    ((App) (mainActivity).getApplication()).getTransData()
+                            .setPin(ISOUtils.hexString(new byte[6]));
                 } else {
                     // 输入成功
-                    ((App) (mainActivity).getApplication()).setPin(event.getEncrypPin());
+                    ((App) (mainActivity).getApplication()).getTransData()
+                            .setPin(ISOUtils.hexString(event.getEncrypPin()));
                 }
-                manager.beginTransaction().hide(fragment);
+                mainActivity.getInputPinWaitThreat().notifyThread();
             } else {
                 Message pinFinishMsg = new Message();
                 pinFinishMsg.what = Const.PIN_FINISH;

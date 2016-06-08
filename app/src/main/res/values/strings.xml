@@ -4,4 +4,12 @@
     <string name="header_pay">消费</string>
     <string name="money_input">请输入金额</string>
     <string name="pin_input">请持卡人输入密码</string>
+    <string name="proofNo_input">请输入原凭证号</string>
+    <string name="authCode_input">请输入授权码</string>
+    <string name="installmentNumber_input">请输入分期期数</string>
+
+    <string name="choose_time_hour">时</string>
+    <string name="choose_time_minute">分</string>
+    <string name="choose_time_second">秒</string>
+    <string name="show_from_msg">原交易信息确认</string>
 </resources>

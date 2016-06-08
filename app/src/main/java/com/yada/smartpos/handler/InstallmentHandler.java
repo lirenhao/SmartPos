@@ -17,19 +17,23 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 
-public class ConsumeHandler {
+/**
+ * 分期交易
+ */
+public class InstallmentHandler {
 
     private MainActivity mainActivity;
     private Message message;
 
-    public ConsumeHandler(MainActivity mainActivity) {
+    public InstallmentHandler(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
     }
 
     public void sale() {
         ((App) mainActivity.getApplication()).setTransData(new TransData());
         ((App) mainActivity.getApplication()).setTransResult(new TransResult());
-        ((App) mainActivity.getApplication()).getTransData().setTransType(TransType.PAY);
+        ((App) mainActivity.getApplication()).getTransData().setTransType(TransType.INSTALLMENT_PAY);
+
         // 输入金额
         message = mainActivity.getFragmentHandler().obtainMessage(1);
         message.obj = "amount";
@@ -45,13 +49,19 @@ public class ConsumeHandler {
         // 判断是IC卡还是磁条卡
         switch (((App) mainActivity.getApplication()).getTransData().getCardType()) {
             case MSCARD:
+                // 输入分期期数
+                message = mainActivity.getFragmentHandler().obtainMessage(7);
+                message.obj = "installment";
+                message.sendToTarget();
+                mainActivity.getInstallmentWaitThreat().waitForRslt();
+
                 // 磁条卡输入密码
-                Message message = mainActivity.getFragmentHandler().obtainMessage(3);
+                message = mainActivity.getFragmentHandler().obtainMessage(3);
                 message.obj = "inputPin";
                 message.sendToTarget();
                 mainActivity.getInputPinWaitThreat().waitForRslt();
                 // 联机交易
-                onLinePay(((App) mainActivity.getApplication()).getTransData());
+                onLineInstallmentPay(((App) mainActivity.getApplication()).getTransData());
                 break;
             case ICCARD:
                 mainActivity.getWaitThreat().waitForRslt();
@@ -69,6 +79,7 @@ public class ConsumeHandler {
                     ((App) mainActivity.getApplication()).getTransData().getOldProofNo(),
                     ((App) mainActivity.getApplication()).getTransResult().getTransResp());
 
+        // 显示结果
         message = mainActivity.getFragmentHandler().obtainMessage(100);
         message.obj = "result";
         message.sendToTarget();
@@ -77,7 +88,7 @@ public class ConsumeHandler {
     public void revoke() throws UnsupportedEncodingException, ISO8583Exception {
         ((App) mainActivity.getApplication()).setTransData(new TransData());
         ((App) mainActivity.getApplication()).setTransResult(new TransResult());
-        ((App) mainActivity.getApplication()).getTransData().setTransType(TransType.REVOKE);
+        ((App) mainActivity.getApplication()).getTransData().setTransType(TransType.INSTALLMENT_REVOKE);
         // TODO 输入主管密码
 
         // 输入原凭证号
@@ -90,13 +101,13 @@ public class ConsumeHandler {
         String unpack = SharedPreferencesUtil.getStringParam(mainActivity,
                 ((App) mainActivity.getApplication()).getTransData().getOldProofNo());
         ISO8583 iso8583 = mainActivity.getIso8583();
-
         // 未查到原交易抛出异常
         if (null != unpack && !"".equals(unpack)){
             iso8583.unpack(unpack);
         } else {
             throw new ISO8583Exception("未查到原交易");
         }
+        // 把交易信息放到App中
         // 原交易卡号
         ((App) mainActivity.getApplication()).getTransData().setAccount(iso8583.getField(2));
         // 原交易金额
@@ -125,13 +136,8 @@ public class ConsumeHandler {
         // 判断是IC卡还是磁条卡
         switch (((App) mainActivity.getApplication()).getTransData().getCardType()) {
             case MSCARD:
-                // 磁条卡输入密码
-                Message message = mainActivity.getFragmentHandler().obtainMessage(3);
-                message.obj = "inputPin";
-                message.sendToTarget();
-                mainActivity.getInputPinWaitThreat().waitForRslt();
                 // 联机交易
-                onLineRevoke(((App) mainActivity.getApplication()).getTransData());
+                onLineInstallmentRevoke(((App) mainActivity.getApplication()).getTransData());
                 break;
             case ICCARD:
                 mainActivity.getWaitThreat().waitForRslt();
@@ -152,7 +158,7 @@ public class ConsumeHandler {
     public void refund() {
         ((App) mainActivity.getApplication()).setTransData(new TransData());
         ((App) mainActivity.getApplication()).setTransResult(new TransResult());
-        ((App) mainActivity.getApplication()).getTransData().setTransType(TransType.REFUND);
+        ((App) mainActivity.getApplication()).getTransData().setTransType(TransType.INSTALLMENT_REFUND);
         // TODO 输入主管密码
 
         // 刷卡
@@ -194,7 +200,13 @@ public class ConsumeHandler {
                 message.sendToTarget();
                 mainActivity.getAmountWaitThreat().waitForRslt();
 
-                onLineRefund(((App) mainActivity.getApplication()).getTransData());
+                // 输入分期期数
+                message = mainActivity.getFragmentHandler().obtainMessage(7);
+                message.obj = "installment";
+                message.sendToTarget();
+                mainActivity.getInstallmentWaitThreat().waitForRslt();
+
+                onLineInstallmentRefund(((App) mainActivity.getApplication()).getTransData());
                 break;
             case ICCARD:
                 mainActivity.getWaitThreat().waitForRslt();
@@ -205,18 +217,15 @@ public class ConsumeHandler {
             default:
                 break;
         }
-
+        // 显示结果
         message = mainActivity.getFragmentHandler().obtainMessage(100);
         message.obj = "result";
         message.sendToTarget();
     }
 
-    /**
-     * 联机消费处理
-     */
-    private void onLinePay(TransData transData) {
+    private void onLineInstallmentPay(TransData transData) {
         try {
-            ISO8583 iso8583 = PackMessage.pay(mainActivity, transData);
+            ISO8583 iso8583 = PackMessage.installmentPay(mainActivity, transData);
             String pack = iso8583.pack();
             TcpClient client = mainActivity.getClient();
             String unpack = Client.send(mainActivity, client, pack, PackMessage.reverse(iso8583));
@@ -230,12 +239,9 @@ public class ConsumeHandler {
         }
     }
 
-    /**
-     * 联机撤销处理
-     */
-    private void onLineRevoke(TransData transData) {
+    private void onLineInstallmentRevoke(TransData transData) {
         try {
-            ISO8583 iso8583 = PackMessage.revoke(mainActivity, transData);
+            ISO8583 iso8583 = PackMessage.installmentRevoke(mainActivity, transData);
             String pack = iso8583.pack();
             TcpClient client = mainActivity.getClient();
             String unpack = Client.send(mainActivity, client, pack, PackMessage.reverse(iso8583));
@@ -249,12 +255,9 @@ public class ConsumeHandler {
         }
     }
 
-    /**
-     * 联机退货处理
-     */
-    private void onLineRefund(TransData transData) {
+    private void onLineInstallmentRefund(TransData transData) {
         try {
-            ISO8583 iso8583 = PackMessage.refund(mainActivity, transData);
+            ISO8583 iso8583 = PackMessage.installmentRefund(mainActivity, transData);
             String pack = iso8583.pack();
             TcpClient client = mainActivity.getClient();
             String unpack = Client.send(mainActivity, client, pack, null);
@@ -267,6 +270,5 @@ public class ConsumeHandler {
             ((App) mainActivity.getApplication()).getTransResult().setTransMsg(e.getMessage());
         }
     }
-
 
 }
