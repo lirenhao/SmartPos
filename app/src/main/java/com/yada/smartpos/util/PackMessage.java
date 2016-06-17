@@ -2,7 +2,6 @@ package com.yada.smartpos.util;
 
 import com.newland.pos.sdk.util.ISO8583;
 import com.newland.pos.sdk.util.ISO8583Exception;
-import com.yada.smartpos.activity.MainActivity;
 import com.yada.smartpos.model.TransData;
 
 public class PackMessage {
@@ -14,8 +13,7 @@ public class PackMessage {
         return iso8583.pack();
     }
 
-    public static ISO8583 pay(MainActivity mainActivity, TransData transData) {
-        ISO8583 iso8583 = mainActivity.getIso8583();
+    public static ISO8583 pay(ISO8583 iso8583, TransData transData) {
         iso8583.setField(0, "0200");
         iso8583.setField(2, transData.getAccount());// 主帐号
         iso8583.setField(3, "000008");// 处理码
@@ -48,8 +46,7 @@ public class PackMessage {
         return iso8583;
     }
 
-    public static ISO8583 revoke(MainActivity mainActivity, TransData transData) {
-        ISO8583 iso8583 = mainActivity.getIso8583();
+    public static ISO8583 revoke(ISO8583 iso8583, TransData transData) {
         iso8583.setField(0, "0200");
         iso8583.setField(2, transData.getAccount());// 主帐号
         iso8583.setField(3, "200008");// 处理码
@@ -73,13 +70,12 @@ public class PackMessage {
         if (transData.getPin() != null)
             iso8583.setField(52, transData.getPin());// 个人识别码
         iso8583.setField(61, "000008001000009");// 自定义域 交易批次号+操作员号+票据号
-        iso8583.setField(62, "0200" + transData.getOldTraceNumber()
+        iso8583.setField(62, "0200" + transData.getOldTraceNo()
                 + transData.getOldTransDate() + transData.getOldTransTime());// 自定义域 信息类型码+系统跟踪号+交易日期和时间
         return iso8583;
     }
 
-    public static ISO8583 refund(MainActivity mainActivity, TransData transData) {
-        ISO8583 iso8583 = mainActivity.getIso8583();
+    public static ISO8583 refund(ISO8583 iso8583, TransData transData) {
         iso8583.setField(0, "0220");
         iso8583.setField(2, transData.getAccount());// 主帐号
         iso8583.setField(3, "270008");// 处理码
@@ -105,8 +101,7 @@ public class PackMessage {
         return iso8583;
     }
 
-    public static ISO8583 query(MainActivity mainActivity, TransData transData) {
-        ISO8583 iso8583 = mainActivity.getIso8583();
+    public static ISO8583 query(ISO8583 iso8583, TransData transData) {
         iso8583.setField(0, "0200");
         iso8583.setField(2, transData.getAccount());// 主帐号
         iso8583.setField(3, "310008");// 处理码
@@ -138,8 +133,7 @@ public class PackMessage {
         return iso8583;
     }
 
-    public static ISO8583 preAuth(MainActivity mainActivity, TransData transData) {
-        ISO8583 iso8583 = mainActivity.getIso8583();
+    public static ISO8583 preAuth(ISO8583 iso8583, TransData transData) {
         iso8583.setField(0, "0100");
         iso8583.setField(2, transData.getAccount());// 主帐号
         iso8583.setField(3, "030008");// 处理码
@@ -172,8 +166,7 @@ public class PackMessage {
         return iso8583;
     }
 
-    public static ISO8583 preAuthRevoke(MainActivity mainActivity, TransData transData) {
-        ISO8583 iso8583 = mainActivity.getIso8583();
+    public static ISO8583 preAuthRevoke(ISO8583 iso8583, TransData transData) {
         iso8583.setField(0, "0100");
         iso8583.setField(2, transData.getAccount());// 主帐号
         iso8583.setField(3, "200008");// 处理码
@@ -197,13 +190,12 @@ public class PackMessage {
         if (transData.getPin() != null)
             iso8583.setField(52, transData.getPin());// 个人识别码
         iso8583.setField(61, "000008001000009");// 自定义域 交易批次号+操作员号+票据号
-        iso8583.setField(62, "0100" + transData.getOldTraceNumber()
+        iso8583.setField(62, "0100" + transData.getOldTraceNo()
                 + transData.getOldTransDate() + transData.getOldTransTime());// 自定义域 信息类型码+系统跟踪号+交易日期和时间
         return iso8583;
     }
 
-    public static ISO8583 preAuthComplete(MainActivity mainActivity, TransData transData) {
-        ISO8583 iso8583 = mainActivity.getIso8583();
+    public static ISO8583 preAuthComplete(ISO8583 iso8583, TransData transData) {
         iso8583.setField(0, "0200");
         iso8583.setField(2, transData.getAccount());// 主帐号
         iso8583.setField(3, "000008");// 处理码
@@ -237,8 +229,7 @@ public class PackMessage {
         return iso8583;
     }
 
-    public static ISO8583 preAuthCompleteNotice(MainActivity mainActivity, TransData transData) {
-        ISO8583 iso8583 = mainActivity.getIso8583();
+    public static ISO8583 preAuthCompleteNotice(ISO8583 iso8583, TransData transData) {
         iso8583.setField(0, "0220");
         iso8583.setField(2, transData.getAccount());// 主帐号
         iso8583.setField(3, "000008");// 处理码
@@ -275,12 +266,11 @@ public class PackMessage {
         return iso8583;
     }
 
-    public static ISO8583 preAuthCompleteRevoke(MainActivity mainActivity, TransData transData) {
-        return revoke(mainActivity, transData);
+    public static ISO8583 preAuthCompleteRevoke(ISO8583 iso8583, TransData transData) {
+        return revoke(iso8583, transData);
     }
 
-    public static ISO8583 installmentPay(MainActivity mainActivity, TransData transData) {
-        ISO8583 iso8583 = mainActivity.getIso8583();
+    public static ISO8583 installmentPay(ISO8583 iso8583, TransData transData) {
         iso8583.setField(0, "0200");
         iso8583.setField(2, transData.getAccount());// 主帐号
         iso8583.setField(3, "000008");// 处理码
@@ -315,8 +305,7 @@ public class PackMessage {
         return iso8583;
     }
 
-    public static ISO8583 installmentRevoke(MainActivity mainActivity, TransData transData) {
-        ISO8583 iso8583 = mainActivity.getIso8583();
+    public static ISO8583 installmentRevoke(ISO8583 iso8583, TransData transData) {
         iso8583.setField(0, "0200");
         iso8583.setField(2, transData.getAccount());// 主帐号
         iso8583.setField(3, "200008");// 处理码
@@ -342,13 +331,12 @@ public class PackMessage {
         if (transData.getPin() != null)
             iso8583.setField(52, transData.getPin());// 个人识别码
         iso8583.setField(61, "000008001000009");// 自定义域 交易批次号+操作员号+票据号
-        iso8583.setField(62, "0200" + transData.getOldTraceNumber()
+        iso8583.setField(62, "0200" + transData.getOldTraceNo()
                 + transData.getOldTransDate() + transData.getOldTransTime());// 自定义域 信息类型码+系统跟踪号+交易日期和时间
         return iso8583;
     }
 
-    public static ISO8583 installmentRefund(MainActivity mainActivity, TransData transData) {
-        ISO8583 iso8583 = mainActivity.getIso8583();
+    public static ISO8583 installmentRefund(ISO8583 iso8583, TransData transData) {
         iso8583.setField(0, "0220");
         iso8583.setField(2, transData.getAccount());// 主帐号
         iso8583.setField(3, "270008");// 处理码

@@ -34,4 +34,7 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.3.0'
     compile 'com.alibaba:fastjson:1.2.12'
     compile 'org.xutils:xutils:3.3.34'
+    compile('com.yada.sdk:com.yada.sdk.device:0.0.1-SNAPSHOT') {
+        exclude(module: 'jpos')
+    }
 }

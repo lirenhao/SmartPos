@@ -1,10 +1,13 @@
 package com.yada.smartpos.model;
 
+import com.yada.sdk.packages.transaction.IMessage;
+
 public class TransResult {
 
     private String transCode;
     private String transMsg;
     private String transResp;
+    private IMessage messageResp;
 
     public String getTransCode() {
         return transCode;
@@ -28,6 +31,14 @@ public class TransResult {
 
     public void setTransResp(String transResp) {
         this.transResp = transResp;
+    }
+
+    public IMessage getMessageResp() {
+        return messageResp;
+    }
+
+    public void setMessageResp(IMessage messageResp) {
+        this.messageResp = messageResp;
     }
 
 }

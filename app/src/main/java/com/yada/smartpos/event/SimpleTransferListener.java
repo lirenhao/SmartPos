@@ -8,13 +8,12 @@ import com.newland.mtype.module.common.emv.level2.EmvCardholderCertType;
 import com.newland.mtype.tlv.TLVPackage;
 import com.newland.mtype.util.ISOUtils;
 import com.newland.pos.sdk.util.BytesUtils;
-import com.newland.pos.sdk.util.ISO8583;
-import com.newland.pos.sdk.util.ISO8583Exception;
+import com.yada.sdk.packages.PackagingException;
+import com.yada.sdk.packages.transaction.IMessage;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
-import com.yada.smartpos.util.Client;
+import com.yada.smartpos.model.TransData;
 import com.yada.smartpos.util.Const.MessageTag;
-import com.yada.smartpos.util.PackMessage;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -130,7 +129,7 @@ public class SimpleTransferListener implements EmvTransListener {
     }
 
     @Override
-    public void onRequestOnline(EmvTransController controller, EmvTransInfo transInfo) throws ISO8583Exception, IOException {
+    public void onRequestOnline(EmvTransController controller, EmvTransInfo transInfo) throws IOException, PackagingException {
         TLVPackage tlvPackage = transInfo.setExternalInfoPackage(L_55TAGS);
         ((App) mainActivity.getApplication()).getTransData().setAccount(transInfo.getCardNo());
         ((App) mainActivity.getApplication()).getTransData().setAmount(new BigDecimal(transInfo.getAmountAuthorisedNumeric()));
@@ -149,30 +148,37 @@ public class SimpleTransferListener implements EmvTransListener {
          }
          **/
         // [步骤1]：从该处transInfo中获取ic卡卡片信息后，发送银联8583交易
-        ISO8583 iso8583Req = null;
-        switch(((App) mainActivity.getApplication()).getTransData().getTransType()){
+        IMessage message = null;
+        TransData transData = ((App) mainActivity.getApplication()).getTransData();
+        switch(transData.getTransType()){
             case PAY:
-                iso8583Req = PackMessage.pay(mainActivity, ((App) mainActivity.getApplication()).getTransData());
+                message = mainActivity.getTraner().pay(transData.getAccount(), transData.getAmount().toString(),
+                        transData.getValidDate(), "901", transData.getSequenceNumber(),
+                        transData.getSecondTrackData(), transData.getThirdTrackData(),
+                        transData.getPin(), transData.getIcCardData());
                 break;
             case REVOKE:
-                iso8583Req = PackMessage.revoke(mainActivity, ((App) mainActivity.getApplication()).getTransData());
+                message = mainActivity.getTraner().revoke(transData.getAccount(), transData.getAmount().toString(),
+                        transData.getValidDate(), "901", transData.getSequenceNumber(),transData.getSecondTrackData(),
+                        transData.getThirdTrackData(), transData.getPin(), transData.getOldAuthCode(),
+                        transData.getOldTraceNo(), transData.getOldTransDate(), transData.getOldTransTime());
                 break;
             case REFUND:
-                iso8583Req = PackMessage.refund(mainActivity, ((App) mainActivity.getApplication()).getTransData());
+                message = mainActivity.getTraner().revoke(transData.getAccount(), transData.getAmount().toString(),
+                        transData.getValidDate(), "901", transData.getSequenceNumber(),transData.getSecondTrackData(),
+                        transData.getThirdTrackData(), transData.getPin(), transData.getOldAuthCode(),
+                        transData.getOldTraceNo(), transData.getOldTransDate(), transData.getOldTransTime());
                 break;
         }
 
-        String unpack = Client.send(mainActivity, mainActivity.getClient(), iso8583Req.pack(), PackMessage.reverse(iso8583Req));
-        ISO8583 iso8583Resp = mainActivity.getIso8583();
-        iso8583Resp.unpack(unpack);
-        if ("00".equals(iso8583Resp.getField(39))) {
-            tlvPackage.unpack(BytesUtils.hexStringToBytes(iso8583Resp.getField(55)));
+        if (null != message && "00".equals(message.getFieldString(39))) {
+            tlvPackage.unpack(BytesUtils.hexStringToBytes(message.getFieldString(55)));
             SecondIssuanceRequest request = new SecondIssuanceRequest();
-            request.setAuthorisationResponseCode(iso8583Resp.getField(39));// 取自银联8583规范39域值,该参数按交易实际值填充
+            request.setAuthorisationResponseCode(message.getFieldString(39));// 取自银联8583规范39域值,该参数按交易实际值填充
             request.setIssuerAuthenticationData(tlvPackage.getValue(0x91));//取自银联8583规范 55域0x91值,该参数按交易实际值填充
             request.setIssuerScriptTemplate1(tlvPackage.getValue(0x71));//取自银联8583规范 55域0x71值,该参数按交易实际值填充
             request.setIssuerScriptTemplate2(tlvPackage.getValue(0x72));//取自银联8583规范 55域0x72值,该参数按交易实际值填充
-            request.setAuthorisationCode(iso8583Resp.getField(38));//取自银联8583规范 38域值,该参数按交易实际值填充
+            request.setAuthorisationCode(message.getFieldString(38));//取自银联8583规范 38域值,该参数按交易实际值填充
 
             // [步骤2].ic卡联机交易成功或者非接圈存交易，调用二次授权接口，等回调onemvfinished结束流程。
             controller.secondIssuance(request);

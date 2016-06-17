@@ -73,6 +73,8 @@ public class InstallmentFragment extends Fragment implements View.OnClickListene
         final String[] planIds = new String[] { "A025", "B014", "IP03", "R204" , "T015", "LA02", "IP00"};
         planDialog = new AlertDialog.Builder(mainActivity);
         planDialog.setTitle("计划ID");
+        // 设置默认的值
+        ((App) (mainActivity).getApplication()).getTransData().setInstallmentPlanId(planIds[0]);
         planDialog.setSingleChoiceItems(planIds, 0, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {

@@ -19,7 +19,7 @@ public class TransData {
     private String icCardData;// IC卡交易数据域
     private String oldProofNo;// 原凭证号
     private String oldAuthCode;// 原消费交易授权号
-    private String oldTraceNumber;// 原系统跟踪号
+    private String oldTraceNo;// 原系统跟踪号
     private String oldTransDate;// 原交易日期
     private String oldTransTime;// 原交易日期
     private String referenceNumber;// 参考号
@@ -122,12 +122,12 @@ public class TransData {
         this.oldAuthCode = oldAuthCode;
     }
 
-    public String getOldTraceNumber() {
-        return oldTraceNumber;
+    public String getOldTraceNo() {
+        return oldTraceNo;
     }
 
-    public void setOldTraceNumber(String oldTraceNumber) {
-        this.oldTraceNumber = oldTraceNumber;
+    public void setOldTraceNo(String oldTraceNo) {
+        this.oldTraceNo = oldTraceNo;
     }
 
     public String getOldTransDate() {

@@ -13,8 +13,7 @@ import com.newland.mtype.module.common.printer.FontSettingScope;
 import com.newland.mtype.module.common.printer.FontType;
 import com.newland.mtype.module.common.printer.LiteralType;
 import com.newland.mtype.module.common.printer.WordStockType;
-import com.newland.pos.sdk.util.ISO8583;
-import com.newland.pos.sdk.util.ISO8583Exception;
+import com.yada.sdk.packages.transaction.IMessage;
 import com.yada.smartpos.R;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
@@ -22,7 +21,7 @@ import com.yada.smartpos.model.TransResult;
 import com.yada.smartpos.module.PrinterModule;
 import com.yada.smartpos.module.impl.PrinterModuleImpl;
 
-import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 
 public class OrderFragment extends Fragment implements View.OnClickListener {
 
@@ -49,28 +48,21 @@ public class OrderFragment extends Fragment implements View.OnClickListener {
             order.append("交易失败\n交易结果为空");
         } else {
             if ("1".equals(transResult.getTransCode())) {
-                ISO8583 iso8583 = mainActivity.getIso8583();
-                try {
-                    iso8583.unpack(transResult.getTransResp());
-                    order.append("\n\n").append("           ").
-                            append("签购单").append("\n\n").
-                            append("商户名称：TEST\n").
-                            append("商户编号：104110070110814\n").
-                            append("终端编号：11000897\n").
-                            append("操作员号：001\n").
-                            append("卡号：").append(iso8583.getField(2)).append("\n").
-                            append("凭证号：").append(((App) mainActivity.getApplication()).getTransData().getOldProofNo()).append("\n").
-                            append("授权码：").append(iso8583.getField(38)).append("\n").
-                            append("参考号：").append(iso8583.getField(37)).append("\n").
-                            append("日期时间：").append(iso8583.getField(13)).append(iso8583.getField(12)).append("\n").
-                            append("金额：").append(iso8583.getField(4)).append("\n").
-                            append("--------------------------------\n").append("\n\n\n\n\n");
-                     doPrinter();
-                } catch (UnsupportedEncodingException | ISO8583Exception e) {
-                    e.printStackTrace();
-                    orderView.setGravity(Gravity.CENTER);
-                    order.append("交易失败\n").append(e.getMessage());
-                }
+                IMessage messageResp = transResult.getMessageResp();
+                order.append("\n\n").append("           ").
+                        append("签购单").append("\n\n").
+                        append("商户名称：TEST\n").
+                        append("商户编号：").append(messageResp.getFieldString(42)).append("\n").
+                        append("终端编号：").append(messageResp.getFieldString(41)).append("\n").
+                        append("操作员号：001\n").
+                        append("卡号：").append(messageResp.getFieldString(2)).append("\n").
+                        append("凭证号：").append(messageResp.getFieldString(11)).append("\n").
+                        append("授权码：").append(messageResp.getFieldString(38)).append("\n").
+                        append("参考号：").append(messageResp.getFieldString(37)).append("\n").
+                        append("日期时间：").append(messageResp.getFieldString(13)).append(messageResp.getFieldString(12)).append("\n").
+                        append("金额：").append(new BigDecimal(messageResp.getFieldString(4)).movePointLeft(2).toString()).append("\n").
+                        append("--------------------------------\n").append("\n\n\n\n\n");
+                //doPrinter();
             } else {
                 orderView.setGravity(Gravity.CENTER);
                 order.append("交易失败\n").append(transResult.getTransMsg());

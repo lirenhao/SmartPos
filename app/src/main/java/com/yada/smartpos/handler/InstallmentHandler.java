@@ -1,21 +1,19 @@
 package com.yada.smartpos.handler;
 
 import android.os.Message;
-import com.newland.pos.sdk.util.ISO8583;
-import com.newland.pos.sdk.util.ISO8583Exception;
-import com.yada.sdk.net.TcpClient;
+import com.newland.pos.sdk.util.BytesUtils;
+import com.yada.sdk.packages.PackagingException;
+import com.yada.sdk.packages.transaction.IMessage;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
 import com.yada.smartpos.model.TransData;
 import com.yada.smartpos.model.TransResult;
-import com.yada.smartpos.util.Client;
-import com.yada.smartpos.util.PackMessage;
 import com.yada.smartpos.util.SharedPreferencesUtil;
 import com.yada.smartpos.util.TransType;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.nio.ByteBuffer;
 
 /**
  * 分期交易
@@ -29,7 +27,7 @@ public class InstallmentHandler {
         this.mainActivity = mainActivity;
     }
 
-    public void sale() {
+    public void sale() throws IOException, PackagingException {
         ((App) mainActivity.getApplication()).setTransData(new TransData());
         ((App) mainActivity.getApplication()).setTransResult(new TransResult());
         ((App) mainActivity.getApplication()).getTransData().setTransType(TransType.INSTALLMENT_PAY);
@@ -61,7 +59,11 @@ public class InstallmentHandler {
                 message.sendToTarget();
                 mainActivity.getInputPinWaitThreat().waitForRslt();
                 // 联机交易
-                onLineInstallmentPay(((App) mainActivity.getApplication()).getTransData());
+                TransData transData = ((App) mainActivity.getApplication()).getTransData();
+                IMessage iMessage = mainActivity.getTraner().stagesPay(transData.getAccount(),
+                        transData.getValidDate(), transData.getAmount().toString(), transData.getPin(),
+                        transData.getInstallmentPlanId(), Integer.parseInt(transData.getInstallmentNumber()));
+                ResultHandler.result(mainActivity, iMessage);
                 break;
             case ICCARD:
                 mainActivity.getWaitThreat().waitForRslt();
@@ -74,9 +76,9 @@ public class InstallmentHandler {
         }
 
         TransResult transResult = ((App) mainActivity.getApplication()).getTransResult();
-        if (transResult != null && "1".equals(transResult.getTransCode()) && transResult.getTransResp() != null)
+        if (transResult != null && "1".equals(transResult.getTransCode()) && transResult.getMessageResp() != null)
             SharedPreferencesUtil.setStringParam(mainActivity,
-                    ((App) mainActivity.getApplication()).getTransData().getOldProofNo(),
+                    ((App) mainActivity.getApplication()).getTransResult().getMessageResp().getFieldString(11),
                     ((App) mainActivity.getApplication()).getTransResult().getTransResp());
 
         // 显示结果
@@ -85,7 +87,7 @@ public class InstallmentHandler {
         message.sendToTarget();
     }
 
-    public void revoke() throws UnsupportedEncodingException, ISO8583Exception {
+    public void revoke() throws PackagingException, IOException {
         ((App) mainActivity.getApplication()).setTransData(new TransData());
         ((App) mainActivity.getApplication()).setTransResult(new TransResult());
         ((App) mainActivity.getApplication()).getTransData().setTransType(TransType.INSTALLMENT_REVOKE);
@@ -100,26 +102,26 @@ public class InstallmentHandler {
         // 查询原交易信息
         String unpack = SharedPreferencesUtil.getStringParam(mainActivity,
                 ((App) mainActivity.getApplication()).getTransData().getOldProofNo());
-        ISO8583 iso8583 = mainActivity.getIso8583();
         // 未查到原交易抛出异常
-        if (null != unpack && !"".equals(unpack)){
-            iso8583.unpack(unpack);
+        IMessage oldMessage;
+        if (null != unpack && !"".equals(unpack)) {
+            oldMessage = mainActivity.getPacker().unpack(ByteBuffer.wrap(BytesUtils.hexStringToBytes(unpack)));
         } else {
-            throw new ISO8583Exception("未查到原交易");
+            throw new PackagingException("未查到原交易");
         }
         // 把交易信息放到App中
         // 原交易卡号
-        ((App) mainActivity.getApplication()).getTransData().setAccount(iso8583.getField(2));
+        ((App) mainActivity.getApplication()).getTransData().setAccount(oldMessage.getFieldString(2));
         // 原交易金额
-        ((App) mainActivity.getApplication()).getTransData().setAmount(new BigDecimal(iso8583.getField(4)));
+        ((App) mainActivity.getApplication()).getTransData().setAmount(new BigDecimal(oldMessage.getFieldString(4)));
         // 原交易授权码
-        ((App) mainActivity.getApplication()).getTransData().setOldAuthCode(iso8583.getField(38));
+        ((App) mainActivity.getApplication()).getTransData().setOldAuthCode(oldMessage.getFieldString(38));
         // 原系统跟踪号
-        ((App) mainActivity.getApplication()).getTransData().setOldTraceNumber(iso8583.getField(11));
+        ((App) mainActivity.getApplication()).getTransData().setOldTraceNo(oldMessage.getFieldString(11));
         // 原交易日期
-        ((App) mainActivity.getApplication()).getTransData().setOldTransDate(iso8583.getField(13));
+        ((App) mainActivity.getApplication()).getTransData().setOldTransDate(oldMessage.getFieldString(13));
         // 原交易时间
-        ((App) mainActivity.getApplication()).getTransData().setOldTransTime(iso8583.getField(12));
+        ((App) mainActivity.getApplication()).getTransData().setOldTransTime(oldMessage.getFieldString(12));
 
         // 展示原交易信息
         message = mainActivity.getFragmentHandler().obtainMessage(6);
@@ -137,7 +139,13 @@ public class InstallmentHandler {
         switch (((App) mainActivity.getApplication()).getTransData().getCardType()) {
             case MSCARD:
                 // 联机交易
-                onLineInstallmentRevoke(((App) mainActivity.getApplication()).getTransData());
+                TransData transData = ((App) mainActivity.getApplication()).getTransData();
+                IMessage iMessage = mainActivity.getTraner().stagesRevoke(transData.getAccount(), transData.getAmount().toString(),
+                        transData.getValidDate(), "901", transData.getSequenceNumber(), transData.getSecondTrackData(),
+                        transData.getThirdTrackData(), transData.getPin(), transData.getOldAuthCode(),
+                        transData.getOldTraceNo(), transData.getOldTransDate(), transData.getOldTransTime(),
+                        transData.getInstallmentPlanId(), transData.getInstallmentNumber());
+                ResultHandler.result(mainActivity, iMessage);
                 break;
             case ICCARD:
                 mainActivity.getWaitThreat().waitForRslt();
@@ -155,7 +163,7 @@ public class InstallmentHandler {
         message.sendToTarget();
     }
 
-    public void refund() {
+    public void refund() throws PackagingException, IOException {
         ((App) mainActivity.getApplication()).setTransData(new TransData());
         ((App) mainActivity.getApplication()).setTransResult(new TransResult());
         ((App) mainActivity.getApplication()).getTransData().setTransType(TransType.INSTALLMENT_REFUND);
@@ -206,7 +214,13 @@ public class InstallmentHandler {
                 message.sendToTarget();
                 mainActivity.getInstallmentWaitThreat().waitForRslt();
 
-                onLineInstallmentRefund(((App) mainActivity.getApplication()).getTransData());
+                TransData transData = ((App) mainActivity.getApplication()).getTransData();
+                IMessage iMessage = mainActivity.getTraner().stagesRefund(transData.getAccount(), transData.getAmount().toString(),
+                        transData.getValidDate(), "901", transData.getSequenceNumber(), transData.getSecondTrackData(),
+                        transData.getThirdTrackData(), transData.getPin(), transData.getOldAuthCode(),
+                        transData.getOldTraceNo(), transData.getOldTransDate(), transData.getOldTransTime(),
+                        transData.getInstallmentPlanId(), transData.getInstallmentNumber());
+                ResultHandler.result(mainActivity, iMessage);
                 break;
             case ICCARD:
                 mainActivity.getWaitThreat().waitForRslt();
@@ -222,53 +236,4 @@ public class InstallmentHandler {
         message.obj = "result";
         message.sendToTarget();
     }
-
-    private void onLineInstallmentPay(TransData transData) {
-        try {
-            ISO8583 iso8583 = PackMessage.installmentPay(mainActivity, transData);
-            String pack = iso8583.pack();
-            TcpClient client = mainActivity.getClient();
-            String unpack = Client.send(mainActivity, client, pack, PackMessage.reverse(iso8583));
-            iso8583.initPack();
-            iso8583.unpack(unpack);
-            ResultHandler.result(mainActivity, iso8583);
-        } catch (ISO8583Exception | IOException | NullPointerException e) {
-            e.printStackTrace();
-            ((App) mainActivity.getApplication()).getTransResult().setTransCode("0");
-            ((App) mainActivity.getApplication()).getTransResult().setTransMsg(e.getMessage());
-        }
-    }
-
-    private void onLineInstallmentRevoke(TransData transData) {
-        try {
-            ISO8583 iso8583 = PackMessage.installmentRevoke(mainActivity, transData);
-            String pack = iso8583.pack();
-            TcpClient client = mainActivity.getClient();
-            String unpack = Client.send(mainActivity, client, pack, PackMessage.reverse(iso8583));
-            iso8583.initPack();
-            iso8583.unpack(unpack);
-            ResultHandler.result(mainActivity, iso8583);
-        } catch (ISO8583Exception | IOException | NullPointerException e) {
-            e.printStackTrace();
-            ((App) mainActivity.getApplication()).getTransResult().setTransCode("0");
-            ((App) mainActivity.getApplication()).getTransResult().setTransMsg(e.getMessage());
-        }
-    }
-
-    private void onLineInstallmentRefund(TransData transData) {
-        try {
-            ISO8583 iso8583 = PackMessage.installmentRefund(mainActivity, transData);
-            String pack = iso8583.pack();
-            TcpClient client = mainActivity.getClient();
-            String unpack = Client.send(mainActivity, client, pack, null);
-            iso8583.initPack();
-            iso8583.unpack(unpack);
-            ResultHandler.result(mainActivity, iso8583);
-        } catch (ISO8583Exception | IOException | NullPointerException e) {
-            e.printStackTrace();
-            ((App) mainActivity.getApplication()).getTransResult().setTransCode("0");
-            ((App) mainActivity.getApplication()).getTransResult().setTransMsg(e.getMessage());
-        }
-    }
-
 }

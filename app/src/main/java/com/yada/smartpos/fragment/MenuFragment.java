@@ -10,7 +10,7 @@ import android.view.ViewGroup;
 import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
-import com.newland.pos.sdk.util.ISO8583Exception;
+import com.yada.sdk.packages.PackagingException;
 import com.yada.smartpos.R;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
@@ -19,7 +19,7 @@ import com.yada.smartpos.handler.InstallmentHandler;
 import com.yada.smartpos.handler.PreAuthHandler;
 import com.yada.smartpos.handler.SignInHandler;
 
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
 
 public class MenuFragment extends Fragment implements View.OnClickListener {
 
@@ -87,7 +87,12 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        consumeHandler.sale();
+                        try {
+                            consumeHandler.sale();
+                        } catch (IOException | PackagingException e) {
+                            e.printStackTrace();
+                            exceptionHandler(e);
+                        }
                     }
                 }).start();
                 break;
@@ -97,7 +102,7 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
                     public void run() {
                         try {
                             consumeHandler.revoke();
-                        } catch (ISO8583Exception | UnsupportedEncodingException e) {
+                        } catch (IOException | PackagingException e) {
                             e.printStackTrace();
                             exceptionHandler(e);
                         }
@@ -108,7 +113,12 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        consumeHandler.refund();
+                        try {
+                            consumeHandler.refund();
+                        } catch (IOException | PackagingException e) {
+                            e.printStackTrace();
+                            exceptionHandler(e);
+                        }
                     }
                 }).start();
                 break;
@@ -116,7 +126,12 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        installmentHandler.sale();
+                        try {
+                            installmentHandler.sale();
+                        } catch (PackagingException | IOException e) {
+                            e.printStackTrace();
+                            exceptionHandler(e);
+                        }
                     }
                 }).start();
                 break;
@@ -126,7 +141,7 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
                     public void run() {
                         try {
                             installmentHandler.revoke();
-                        } catch (UnsupportedEncodingException | ISO8583Exception e) {
+                        } catch (PackagingException | IOException e) {
                             e.printStackTrace();
                             exceptionHandler(e);
                         }
@@ -137,7 +152,12 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        installmentHandler.refund();
+                        try {
+                            installmentHandler.refund();
+                        } catch (PackagingException | IOException e) {
+                            e.printStackTrace();
+                            exceptionHandler(e);
+                        }
                     }
                 }).start();
                 break;
@@ -145,7 +165,12 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        preAuthHandler.preAuth();
+                        try {
+                            preAuthHandler.preAuth();
+                        } catch (IOException | PackagingException e) {
+                            e.printStackTrace();
+                            exceptionHandler(e);
+                        }
                     }
                 }).start();
                 break;
@@ -153,7 +178,12 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        preAuthHandler.preAuthRevoke();
+                        try {
+                            preAuthHandler.preAuthRevoke();
+                        } catch (IOException | PackagingException e) {
+                            e.printStackTrace();
+                            exceptionHandler(e);
+                        }
                     }
                 }).start();
                 break;
@@ -161,7 +191,12 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        preAuthHandler.complete();
+                        try {
+                            preAuthHandler.complete();
+                        } catch (IOException | PackagingException e) {
+                            e.printStackTrace();
+                            exceptionHandler(e);
+                        }
                     }
                 }).start();
                 break;
@@ -171,7 +206,7 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
                     public void run() {
                         try {
                             preAuthHandler.completeRevoke();
-                        } catch (UnsupportedEncodingException | ISO8583Exception e) {
+                        } catch (IOException | PackagingException e) {
                             e.printStackTrace();
                             exceptionHandler(e);
                         }
@@ -182,7 +217,12 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        signInHandler.signIn();
+                        try {
+                            signInHandler.signIn();
+                        } catch (IOException | PackagingException e) {
+                            e.printStackTrace();
+                            exceptionHandler(e);
+                        }
                     }
                 }).start();
                 break;

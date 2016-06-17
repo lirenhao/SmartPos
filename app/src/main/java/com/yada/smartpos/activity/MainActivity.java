@@ -9,31 +9,32 @@ import android.os.Message;
 import android.widget.Toast;
 import com.newland.mtype.module.common.emv.AIDConfig;
 import com.newland.mtype.module.common.emv.CAPublicKey;
-import com.newland.mtype.module.common.pin.KekUsingType;
 import com.newland.mtype.util.ISOUtils;
-import com.newland.pos.sdk.util.ISO8583;
-import com.yada.sdk.net.FixLenPackageSplitterFactory;
-import com.yada.sdk.net.TcpClient;
+import com.yada.sdk.device.encryption.IEncryption;
+import com.yada.sdk.packages.PackagingException;
+import com.yada.sdk.packages.transaction.IPacker;
 import com.yada.smartpos.R;
 import com.yada.smartpos.device.N900Device;
+import com.yada.smartpos.encryption.EncryptionPos;
 import com.yada.smartpos.fragment.*;
 import com.yada.smartpos.module.EmvModule;
-import com.yada.smartpos.module.PinInputModule;
 import com.yada.smartpos.module.impl.EmvModuleImpl;
-import com.yada.smartpos.module.impl.PinInputModuleImpl;
+import com.yada.smartpos.spos.SposPacker;
+import com.yada.smartpos.spos.Traner;
+import com.yada.smartpos.spos.VirtualPos;
 import com.yada.smartpos.util.Const;
 
-import java.net.InetSocketAddress;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 public class MainActivity extends Activity {
 
     private MainActivity mainActivity;
-    private N900Device k21Device;
     private FragmentManager fragmentManager;
     private Handler fragmentHandler;
-    private ISO8583 iso8583;
-    private TcpClient client;
     private WaitThreat waitThreat;
+    private IPacker packer;
+    private VirtualPos virtualPos;
 
     private WaitThreat amountWaitThreat = new WaitThreat();
     private WaitThreat swipeCardWaitThreat = new WaitThreat();
@@ -44,19 +45,9 @@ public class MainActivity extends Activity {
     private WaitThreat installmentWaitThreat = new WaitThreat();
     private WaitThreat dateWheelWaitThreat = new WaitThreat();
     private WaitThreat timeWheelWaitThreat = new WaitThreat();
-    private WaitThreat orderWaitThreat = new WaitThreat();
 
     public Handler getFragmentHandler() {
         return fragmentHandler;
-    }
-
-    public ISO8583 getIso8583() {
-        iso8583.initPack();
-        return iso8583;
-    }
-
-    public TcpClient getClient() {
-        return client;
     }
 
     public WaitThreat getWaitThreat() {
@@ -99,8 +90,12 @@ public class MainActivity extends Activity {
         return timeWheelWaitThreat;
     }
 
-    public WaitThreat getOrderWaitThreat() {
-        return orderWaitThreat;
+    public IPacker getPacker() {
+        return packer;
+    }
+
+    public Traner getTraner() throws IOException, PackagingException {
+        return virtualPos.createTraner();
     }
 
     @Override
@@ -108,14 +103,19 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mainActivity = this;
-        k21Device = new N900Device(this);
-        iso8583 = new ISO8583(this);
-        iso8583.loadXmlFile("CUPS8583.xml");
-        client = new TcpClient(new InetSocketAddress("127.0.0.1", 6789),
-                new FixLenPackageSplitterFactory(2, false), 20000);
         waitThreat = new WaitThreat();
+
         // 初始化设备
-        initDevice();
+        N900Device k21Device = new N900Device(this);
+        k21Device.initController();
+        k21Device.connectDevice();
+        initEmv();
+
+        packer = new SposPacker(this);
+        IEncryption encryption = new EncryptionPos();
+        String MAIN_KEY = "8FF97B609D81C5EA4AE715BEB2F9B57D";
+        virtualPos = new VirtualPos("104110070110814", "11000897", packer, "10.2.54.15", 6789, MAIN_KEY,
+                50000, encryption, ByteBuffer.wrap(ISOUtils.hex2byte("60001200001306")), mainActivity);
 
         fragmentManager = getFragmentManager();
         fragmentHandler = new Handler() {
@@ -176,35 +176,6 @@ public class MainActivity extends Activity {
         Message msg = fragmentHandler.obtainMessage(0);
         msg.obj = "menu";
         msg.sendToTarget();
-    }
-
-    /**
-     * 初始化设备
-     */
-    private void initDevice() {
-        try {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    k21Device.initController();
-                    k21Device.connectDevice();
-                    // 装载主密钥
-                    initMainKey();
-                    // 初始化EMV
-                    initEmv();
-                }
-            }).start();
-        } catch (Exception e) {
-            showMessage("初始化设备异常：" + e, Const.MessageTag.ERROR);
-        }
-    }
-
-    private void initMainKey() {
-        PinInputModule pinInput = new PinInputModuleImpl();
-        // 装载主密钥
-        String MAIN_KEY = "8FF97B609D81C5EA4AE715BEB2F9B57D";
-        pinInput.loadMainKey(KekUsingType.MAIN_KEY, Const.MKIndexConst.DEFAULT_MK_INDEX,
-                ISOUtils.hex2byte(MAIN_KEY), null, 2);
     }
 
     private void initEmv() {

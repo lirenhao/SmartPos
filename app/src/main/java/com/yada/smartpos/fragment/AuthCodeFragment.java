@@ -92,10 +92,8 @@ public class AuthCodeFragment extends Fragment implements View.OnClickListener {
         Message msg = handler.obtainMessage(2);
         switch (view.getId()) {
             case R.id.iv_0:
-                if (inputValue.length() > 0) {
-                    inputValue = inputValue + "0";
-                    msg.sendToTarget();
-                }
+                inputValue = inputValue + "0";
+                msg.sendToTarget();
                 break;
             case R.id.iv_1:
                 inputValue = inputValue + "1";
