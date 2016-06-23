@@ -9,13 +9,16 @@ import com.yada.smartpos.activity.MainActivity;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public class SposPacker implements IPacker {
 
     private MainActivity mainActivity;
+    private byte[] head;
 
-    public SposPacker(MainActivity mainActivity) {
+    public SposPacker(MainActivity mainActivity, byte[] head) {
         this.mainActivity = mainActivity;
+        this.head = head;
     }
 
     @Override
@@ -45,6 +48,13 @@ public class SposPacker implements IPacker {
     public IMessage createEmpty() {
         ISO8583 iso8583 = new ISO8583(mainActivity);
         iso8583.loadXmlFile("CUPS8583.xml");
-        return new SposMessage(iso8583);
+
+        SposMessage message = new SposMessage(iso8583);
+        message.setTpduId(ByteBuffer.wrap(Arrays.copyOfRange(head, 0, 1)));
+        message.setTpduToAddress(ByteBuffer.wrap(Arrays.copyOfRange(head, 1, 3)));
+        message.setTpduFromAddress(ByteBuffer.wrap(Arrays.copyOfRange(head, 3, 5)));
+        message.setVersion(ByteBuffer.wrap(Arrays.copyOfRange(head, 5, 7)));
+
+        return message;
     }
 }

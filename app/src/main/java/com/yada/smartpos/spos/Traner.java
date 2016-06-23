@@ -1,12 +1,12 @@
 package com.yada.smartpos.spos;
 
+import com.payneteasy.tlv.*;
 import com.yada.sdk.device.encryption.TerminalAuth;
 import com.yada.sdk.device.pos.AbsTraner;
 import com.yada.sdk.device.pos.ISequenceGenerator;
-import com.yada.sdk.device.pos.util.Utils;
+import com.yada.sdk.device.pos.posp.params.Block02;
 import com.yada.sdk.net.FixLenPackageSplitterFactory;
 import com.yada.sdk.packages.PackagingException;
-import com.yada.sdk.packages.comm.Tlv;
 import com.yada.sdk.packages.transaction.IMessage;
 import com.yada.sdk.packages.transaction.IPacker;
 import org.slf4j.Logger;
@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,19 +27,21 @@ public class Traner extends AbsTraner {
     private final static Logger LOGGER = LoggerFactory.getLogger(Traner.class);
 
     private CheckSignIn cs;
+    private BerTlvParser tlvParser;
 
     public Traner(String merchantId, String terminalId, String tellerNo,
                   String batchNo, IPacker packer,
                   String serverIp, int serverPort, int timeout,
                   CheckSignIn cs, TerminalAuth terminalAuth,
                   ISequenceGenerator traceNoSeqGenerator,
-                  ISequenceGenerator cerNoSeqGenerator, ByteBuffer head,
+                  ISequenceGenerator cerNoSeqGenerator,
                   LinkedBlockingQueue<IMessage> queue) throws IOException {
         super(merchantId, terminalId, tellerNo, batchNo,
                 new FixLenPackageSplitterFactory(2, false), packer,
                 serverIp, serverPort, timeout, terminalAuth, traceNoSeqGenerator,
-                cerNoSeqGenerator, head, queue);
+                cerNoSeqGenerator, queue);
         this.cs = cs;
+        this.tlvParser = new BerTlvParser();
     }
 
     /**
@@ -107,7 +110,8 @@ public class Traner extends AbsTraner {
         ParamDownload pd = new ParamDownload();
 
         pd.termBasicParam = paramDownloadHandle1();
-        pd.programAppParam =  paramDownloadHandle2("");// TODO 获取参数版本号
+        // 第二块参数下载用于TMS扩展参数下载，暂不去查询
+        paramDownloadHandle2("2020080101000000");
         pd.aidListParam = paramDownloadHandle3();
         pd.ridListParam = paramDownloadHandle4();
     }
@@ -130,18 +134,20 @@ public class Traner extends AbsTraner {
         reqMessage.setFieldString(61, getBatchNo() + "090");
 
         IMessage respMessage = sendTran(reqMessage);
+
         return respMessage.getFieldString(48);
     }
 
     /**
      * 参数下载第二块参数下装程序用参数
+     * TMS扩展的参数
      *
      * @param version 参数版本号
      * @return 下装程序用参数 DF29 DF25
      * @throws PackagingException
      * @throws IOException
      */
-    public String paramDownloadHandle2(String version) throws PackagingException, IOException {
+    public Block02 paramDownloadHandle2(String version) throws PackagingException, IOException {
         IMessage reqMessage = createMessage();
         reqMessage.setFieldString(0, "0800");
         reqMessage.setFieldString(3, "990000");
@@ -151,22 +157,19 @@ public class Traner extends AbsTraner {
         reqMessage.setFieldString(42, getMerchantId());
         reqMessage.setFieldString(61, getBatchNo() + "093");
 
-        Tlv tlvDF25 = new Tlv();
-        tlvDF25.setTag(Utils.ASCII_To_BCD("DF25".getBytes()));
-        tlvDF25.setStringValue("02" + version);
-        reqMessage.setField(56, ByteBuffer.wrap(tlvDF25.getRawByteArray()));
+        BerTlvBuilder builder = new BerTlvBuilder();
+        builder.addHex(new BerTag(0xdf, 0x25), version);
+        reqMessage.setFieldString(56, HexUtil.toHexString(builder.buildArray()));
 
         IMessage respMessage = sendTran(reqMessage);
-        Tlv tlv56 = new Tlv(respMessage.getField(56).array());
-
-        return tlv56.getChildren()[0].getStringValue();
+        return new Block02(respMessage.getField(56).array());
     }
 
     /**
      * AID应用参数版本查询
      *
      * @param df27value 参数下装报文索引号
-     * @return
+     * @return aid、参数版本号列表
      */
     public Map<String, String> aidQueryHandle(String df27value) throws PackagingException, IOException {
         List<String> df26s = new ArrayList<>();
@@ -181,18 +184,19 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(42, getMerchantId());
             reqMessage.setFieldString(61, getBatchNo() + "091");
 
-            Tlv tlvDF27 = new Tlv();
-            tlvDF27.setTag(Utils.ASCII_To_BCD("DF27".getBytes()));
-            tlvDF27.setStringValue(df27value);
-            reqMessage.setField(56, ByteBuffer.wrap(tlvDF27.getRawByteArray()));
+            BerTlvBuilder builder = new BerTlvBuilder();
+            builder.addHex(new BerTag(0xdf, 0x27), df27value);
+            reqMessage.setFieldString(56, HexUtil.toHexString(builder.buildArray()));
 
             IMessage respMessage = sendTran(reqMessage);
 
-            Tlv tlv56 = new Tlv(respMessage.getField(56).array());
+            // TODO 判断查询是否成功、返回报文是否有56域
+
+            BerTlvs tlv56 = tlvParser.parse(respMessage.getField(56).array());
             // DF26中包含的是应用列表
-            df26s.add(tlv56.getChildren()[0].getStringValue());
+            df26s.add(tlv56.find(new BerTag(0xdf, 0x26)).getHexValue());
             // DF27中包含的是参数下装报文索引号
-            df27value = tlv56.getChildren()[1].getStringValue();
+            df27value = tlv56.find(new BerTag(0xdf, 0x27)).getHexValue();
             // 56域中返回的AID参数版本查询结果数据格式为： DF26 DF27
             // DF26中包含的是应用列表，DF27中包含的是参数下装报文索引号
             // 如果DF27所对应的值不为0，表示该终端还有应用列表为下装完，需要终端自动继续发出AID应用参数版本查询请求报文，并带上IST返回的DF27
@@ -200,22 +204,36 @@ public class Traner extends AbsTraner {
 
         Map<String, String> aids = new HashMap<>();
         for (String df26 : df26s) {
-            Tlv tlvDF26 = new Tlv(Utils.ASCII_To_BCD(df26.getBytes()));
-            aids.put(tlvDF26.getChildren()[0].getStringValue(), tlvDF26.getChildren()[1].getStringValue());
+            BerTlvs tlvDF26 = tlvParser.parse(HexUtil.parseHex(df26));
+            // 外层循环是AID查询了几次，内层循环是一次查询返回的DF26的处理
+            for (int i = 0; i < tlvDF26.getList().size(); i = i + 2) {
+                // TODO 判断版本是否过期
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMDDHHmmss");
+                aids.put(tlvDF26.getList().get(i).getHexValue(), tlvDF26.getList().get(i + 1).getHexValue());
+            }
         }
 
         return aids;
     }
 
     /**
-     * 参数下载第三块参数
+     * 参数下载第三块参数(被动参数下载)
      *
-     * @return 应用参数
+     * @param aids      要查询的AID列表
+     * @param df27value 参数下装报文索引号
+     * @return 应用参数 9F06、DF01、9F09、DF11、DF12、DF13、9F1B、DF15、DF16、DF17、DF14、DF18、9F35、9F15、DF25、9F7B、DF40、DF20、DF21
      */
-    public List<String> paramDownloadHandle3() throws IOException, PackagingException {
+    public List<String> paramDownloadHandle3(Map<String, String> aids, String df27value) throws IOException, PackagingException {
         List<String> params = new ArrayList<>();
 
-        Map<String, String> aids = aidQueryHandle("00");
+        // 当df27不为零时接着查询剩余的aid列表
+        if (!df27value.equals("00")) {
+            Map<String, String> otherAids = aidQueryHandle(df27value);
+            for (String aid : otherAids.keySet()) {
+                aids.put(aid, otherAids.get(aid));
+            }
+        }
+        // 查询AID列表中对应AID的参数
         for (String aid : aids.keySet()) {
             IMessage reqMessage = createMessage();
             reqMessage.setFieldString(0, "0800");
@@ -224,17 +242,12 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(24, "009");
             reqMessage.setFieldString(41, getTerminalId());
             reqMessage.setFieldString(42, getMerchantId());
-            Tlv tlv56 = new Tlv();
-            Tlv tlv9F06 = new Tlv();
-            tlv9F06.setTag(Utils.ASCII_To_BCD("9F06".getBytes()));
-            tlv9F06.setStringValue(aid);
-            tlv56.addChild(tlv9F06);
-            Tlv tlvDF25 = new Tlv();
-            tlvDF25.setTag(Utils.ASCII_To_BCD("DF25".getBytes()));
-            tlvDF25.setStringValue(aids.get(aid));
-            tlv56.addChild(tlvDF25);
-            reqMessage.setField(56, ByteBuffer.wrap(tlv56.getRawByteArray()));
             reqMessage.setFieldString(61, getBatchNo() + "093");
+
+            BerTlvBuilder builder = new BerTlvBuilder();
+            builder.addHex(new BerTag(0x9f, 0x06), aid);
+            builder.addHex(new BerTag(0xdf, 0x25), aids.get(aid));
+            reqMessage.setFieldString(56, HexUtil.toHexString(builder.buildArray()));
 
             IMessage respMessage = sendTran(reqMessage);
             params.add(respMessage.getFieldString(56));
@@ -243,9 +256,20 @@ public class Traner extends AbsTraner {
     }
 
     /**
+     * 参数下载第三块参数(主动参数下载)
+     *
+     * @return AID应用参数
+     */
+    public List<String> paramDownloadHandle3() throws IOException, PackagingException {
+        String df27value = "00";
+        Map<String, String> aids = aidQueryHandle(df27value);
+        return paramDownloadHandle3(aids, df27value);
+    }
+
+    /**
      * 公钥参数版本查询
      *
-     * @return
+     * @return rid、参数版本列表
      */
     public Map<String, String> ridQueryHandle() throws PackagingException, IOException {
         Map<String, String> rids = new HashMap<>();
@@ -262,22 +286,27 @@ public class Traner extends AbsTraner {
 
         IMessage respMessage = sendTran(reqMessage);
 
-        Tlv tlv56 = new Tlv(respMessage.getField(56).array());
-        rids.put(tlv56.getChildren()[0].getStringValue(), tlv56.getChildren()[1].getStringValue());
+        BerTlv tlv56 = tlvParser.parseConstructed(respMessage.getField(56).array());
+        BerTlvs tlvDF24 = tlvParser.parse(tlv56.getBytesValue());
+
+        for (int i = 0; i < tlvDF24.getList().size(); i = i + 2) {
+            // TODO 判断版本是否过期
+            rids.put(tlvDF24.getList().get(i).getHexValue(), tlvDF24.getList().get(i + 1).getHexValue());
+        }
 
         return rids;
     }
 
     /**
-     * 参数下载第四块参数
+     * 参数下载第四块参数(被动参数下载)
      * 公钥的参数版本号列表
      *
+     * @param rids rid、参数版本号列表
      * @return 公钥参数
      */
-    public List<String> paramDownloadHandle4() throws PackagingException, IOException {
+    public List<String> paramDownloadHandle4(Map<String, String> rids) throws PackagingException, IOException {
         List<String> params = new ArrayList<>();
 
-        Map<String, String> rids = ridQueryHandle();
         for (String rid : rids.keySet()) {
             IMessage reqMessage = createMessage();
             reqMessage.setFieldString(0, "0800");
@@ -288,21 +317,83 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(42, getMerchantId());
             reqMessage.setFieldString(61, getBatchNo() + "093");
 
-            Tlv tlv56 = new Tlv();
-            Tlv tlv9F06 = new Tlv();
-            tlv9F06.setTag(Utils.ASCII_To_BCD("9F06".getBytes()));
-            tlv9F06.setStringValue(rid);
-            tlv56.addChild(tlv9F06);
-            Tlv tlvDF25 = new Tlv();
-            tlvDF25.setTag(Utils.ASCII_To_BCD("DF25".getBytes()));
-            tlvDF25.setStringValue(rids.get(rid));
-            tlv56.addChild(tlvDF25);
-            reqMessage.setField(56, ByteBuffer.wrap(tlv56.getRawByteArray()));
+            // 每个rid有六个密钥，需要循环六次
+            for (int i = 1; i <= 6; i++) {
+                BerTlvBuilder builder = new BerTlvBuilder();
+                builder.addHex(new BerTag(0x9f, 0x06), rid);
+                builder.addHex(new BerTag(0xdf, 0x25), rids.get(rid));
+                builder.addHex(new BerTag(0xdf, 0x28), "0" + i);
+                reqMessage.setFieldString(56, HexUtil.toHexString(builder.buildArray()));
 
-            IMessage respMessage = sendTran(reqMessage);
-            params.add(respMessage.getFieldString(56));
+                IMessage respMessage = sendTran(reqMessage);
+                params.add(respMessage.getFieldString(56));
+            }
+
+            // A000000333是银联的RID
+            if(rid.equals("A000000333")){
+                // TODO 银联国密存储在7-12位
+                for (int i = 7; i <= 12; i++) {
+                    BerTlvBuilder builder = new BerTlvBuilder();
+                    builder.addHex(new BerTag(0x9f, 0x06), rid);
+                    builder.addHex(new BerTag(0xdf, 0x25), rids.get(rid));
+                    if (i > 9){
+                        builder.addHex(new BerTag(0xdf, 0x28), "" + i);
+                    } else {
+                        builder.addHex(new BerTag(0xdf, 0x28), "0" + i);
+                    }
+                    reqMessage.setFieldString(56, HexUtil.toHexString(builder.buildArray()));
+
+                    IMessage respMessage = sendTran(reqMessage);
+                    params.add(respMessage.getFieldString(56));
+                }
+            }
         }
         return params;
+    }
+
+    /**
+     * 参数下载第四块参数(主动参数下载)
+     * 公钥的参数版本号列表
+     *
+     * @return 公钥参数
+     */
+    public List<String> paramDownloadHandle4() throws PackagingException, IOException {
+        Map<String, String> rids = ridQueryHandle();
+        return paramDownloadHandle4(rids);
+    }
+
+    public void field56Handle(IMessage responseMessage) throws IOException, PackagingException {
+        if (null != responseMessage.getFieldString(56) && !"".equals(responseMessage.getFieldString(56))) {
+            BerTlvs tlv56 = tlvParser.parse(responseMessage.getField(56).array());
+
+            BerTlv tlvDF25 = tlv56.find(new BerTag(0xdf, 0x25));
+            if (null != tlvDF25) {
+                paramDownloadHandle2(tlvDF25.getHexValue());
+            }
+
+            BerTlv tlvDF26 = tlv56.find(new BerTag(0xdf, 0x26));
+            BerTlv tlvDF27 = tlv56.find(new BerTag(0xdf, 0x27));
+            if (null != tlvDF26 && null != tlvDF27) {
+                Map<String, String> aids = new HashMap<>();
+                BerTlvs tlvs = tlvParser.parse(tlvDF26.getBytesValue());
+                for (int i = 0; i < tlvs.getList().size(); i = i + 2) {
+                    // TODO 判断版本是否过期
+                    aids.put(tlvs.getList().get(i).getHexValue(), tlvs.getList().get(i + 1).getHexValue());
+                }
+                paramDownloadHandle3(aids, tlvDF27.getHexValue());
+            }
+
+            BerTlv tlvDF24 = tlv56.find(new BerTag(0xdf, 0x24));
+            if (null != tlvDF24) {
+                Map<String, String> rids = new HashMap<>();
+                BerTlvs tlvs = tlvParser.parse(tlvDF24.getBytesValue());
+                for (int i = 0; i < tlvs.getList().size(); i = i + 2) {
+                    // TODO 判断版本是否过期
+                    rids.put(tlvs.getList().get(i).getHexValue(), tlvs.getList().get(i + 1).getHexValue());
+                }
+                paramDownloadHandle4(rids);
+            }
+        }
     }
 
     /**
@@ -334,28 +425,28 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(3, processCode);// 处理码
             reqMessage.setFieldString(4, formatAmt);// 交易金额
             reqMessage.setFieldString(11, traceNo);// 系统跟踪号
-            if (null != validity && "".equals(validity)) {
+            if (null != validity && !"".equals(validity)) {
                 reqMessage.setFieldString(14, validity);// 卡有效期
             }
             reqMessage.setFieldString(22, posInputType);// POS输入方式
-            if (null != sequenceNumber && "".equals(sequenceNumber)) {
+            if (null != sequenceNumber && !"".equals(sequenceNumber)) {
                 reqMessage.setFieldString(23, sequenceNumber);// 卡片序列号
             }
             reqMessage.setFieldString(24, "009");// NII
             reqMessage.setFieldString(25, "14");// 服务点条件码 14代表POS
-            if (null != secondTrackData && "".equals(secondTrackData)) {
+            if (null != secondTrackData && !"".equals(secondTrackData)) {
                 reqMessage.setFieldString(35, secondTrackData);// 二磁道数据
             }
-            if (null != thirdTrackData && "".equals(thirdTrackData)) {
+            if (null != thirdTrackData && !"".equals(thirdTrackData)) {
                 reqMessage.setFieldString(36, thirdTrackData);// 三磁道数据
             }
             reqMessage.setFieldString(41, getTerminalId());// 终端号
             reqMessage.setFieldString(42, getMerchantId());// 商户号
             reqMessage.setFieldString(49, currency);// 货币代码
-            if (null != pin && "".equals(pin)) {
+            if (null != pin && !"".equals(pin)) {
                 reqMessage.setFieldString(52, pin);// 个人识别码
             }
-            if (null != icCardData && "".equals(icCardData)) {
+            if (null != icCardData && !"".equals(icCardData)) {
                 reqMessage.setFieldString(55, icCardData);
             }
             reqMessage.setFieldString(61, "000008001000009");// 自定义域 交易批次号+操作员号+票据号
@@ -365,9 +456,9 @@ public class Traner extends AbsTraner {
             macData.append(processCode);
             macData.append(formatAmt);
             macData.append(traceNo);
-            macData.append("0" + currency);
+            macData.append("0").append(currency);
 
-            byte[] bcdMacData = Utils.ASCII_To_BCD(macData.toString().getBytes());
+            byte[] bcdMacData = HexUtil.parseHex(macData.toString());
             byte[] terminalByte = getTerminalId().getBytes();
 
             ByteBuffer buf = ByteBuffer.allocate(bcdMacData.length + terminalByte.length);
@@ -379,6 +470,7 @@ public class Traner extends AbsTraner {
 
             //检查是否需要签到或参数下载
             cs.checkMessage(respMessage);
+            field56Handle(respMessage);
         } catch (PackagingException e) {
             LOGGER.debug("when stagesPay happen PackagingException", e);
         } catch (IOException e) {
@@ -417,28 +509,28 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(3, processCode);
             reqMessage.setFieldString(4, formatAmt);
             reqMessage.setFieldString(11, traceNo);
-            if (null != validity && "".equals(validity)) {
+            if (null != validity && !"".equals(validity)) {
                 reqMessage.setFieldString(14, validity);
             }
             reqMessage.setFieldString(22, posInputType);
-            if (null != sequenceNumber && "".equals(sequenceNumber)) {
+            if (null != sequenceNumber && !"".equals(sequenceNumber)) {
                 reqMessage.setFieldString(23, sequenceNumber);
             }
             reqMessage.setFieldString(24, "009");
             reqMessage.setFieldString(25, "14");
-            if (null != secondTrackData && "".equals(secondTrackData)) {
+            if (null != secondTrackData && !"".equals(secondTrackData)) {
                 reqMessage.setFieldString(35, secondTrackData);
             }
-            if (null != thirdTrackData && "".equals(thirdTrackData)) {
+            if (null != thirdTrackData && !"".equals(thirdTrackData)) {
                 reqMessage.setFieldString(36, thirdTrackData);
             }
             reqMessage.setFieldString(41, getTerminalId());
             reqMessage.setFieldString(42, getMerchantId());
             reqMessage.setFieldString(49, currency);
-            if (null != pin && "".equals(pin)) {
+            if (null != pin && !"".equals(pin)) {
                 reqMessage.setFieldString(52, pin);
             }
-            if (null != icCardData && "".equals(icCardData)) {
+            if (null != icCardData && !"".equals(icCardData)) {
                 reqMessage.setFieldString(55, icCardData);
             }
             reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());
@@ -447,9 +539,9 @@ public class Traner extends AbsTraner {
             macData.append(processCode);
             macData.append(formatAmt);
             macData.append(traceNo);
-            macData.append("0" + currency);
+            macData.append("0").append(currency);
 
-            byte[] bcdMacData = Utils.ASCII_To_BCD(macData.toString().getBytes());
+            byte[] bcdMacData = HexUtil.parseHex(macData.toString());
             byte[] terminalByte = getTerminalId().getBytes();
 
             ByteBuffer buf = ByteBuffer.allocate(bcdMacData.length + terminalByte.length);
@@ -461,7 +553,7 @@ public class Traner extends AbsTraner {
 
             //检查是否需要签到或参数下载
             cs.checkMessage(respMessage);
-
+            field56Handle(respMessage);
         } catch (PackagingException e) {
             LOGGER.debug("when stagesPay happen PackagingException", e);
         } catch (IOException e) {
@@ -504,26 +596,26 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(3, processCode);// 处理码
             reqMessage.setFieldString(4, formatAmt);// 交易金额
             reqMessage.setFieldString(11, traceNo);// 系统跟踪号
-            if (null != validity && "".equals(validity)) {
+            if (null != validity && !"".equals(validity)) {
                 reqMessage.setFieldString(14, validity);// 卡有效期
             }
             reqMessage.setFieldString(22, posInputType);// POS输入方式
-            if (null != sequenceNumber && "".equals(sequenceNumber)) {
+            if (null != sequenceNumber && !"".equals(sequenceNumber)) {
                 reqMessage.setFieldString(23, sequenceNumber);// 卡片序列号
             }
             reqMessage.setFieldString(24, "009");// NII
             reqMessage.setFieldString(25, "14");// 服务点条件码 14代表POS
-            if (null != secondTrackData && "".equals(secondTrackData)) {
+            if (null != secondTrackData && !"".equals(secondTrackData)) {
                 reqMessage.setFieldString(35, secondTrackData);// 二磁道数据
             }
-            if (null != thirdTrackData && "".equals(thirdTrackData)) {
+            if (null != thirdTrackData && !"".equals(thirdTrackData)) {
                 reqMessage.setFieldString(36, thirdTrackData);// 三磁道数据
             }
             reqMessage.setFieldString(38, oldAuthCode);// 原消费交易授权号
             reqMessage.setFieldString(41, getTerminalId());// 终端号
             reqMessage.setFieldString(42, getMerchantId());// 商户号
             reqMessage.setFieldString(49, currency);// 货币代码
-            if (null != pin && "".equals(pin))
+            if (null != pin && !"".equals(pin))
                 reqMessage.setFieldString(52, pin);// 个人识别码
             reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());// 自定义域 交易批次号+操作员号+票据号
             reqMessage.setFieldString(62, "0200" + oldTraceNo
@@ -534,9 +626,9 @@ public class Traner extends AbsTraner {
             macData.append(processCode);
             macData.append(formatAmt);
             macData.append(traceNo);
-            macData.append("0" + currency);
+            macData.append("0").append(currency);
 
-            byte[] bcdMacData = Utils.ASCII_To_BCD(macData.toString().getBytes());
+            byte[] bcdMacData = HexUtil.parseHex(macData.toString());
             byte[] terminalByte = getTerminalId().getBytes();
 
             ByteBuffer buf = ByteBuffer.allocate(bcdMacData.length + terminalByte.length);
@@ -548,6 +640,7 @@ public class Traner extends AbsTraner {
 
             //检查是否需要签到或参数下载
             cs.checkMessage(respMessage);
+            field56Handle(respMessage);
         } catch (PackagingException e) {
             LOGGER.debug("when stagesPay happen PackagingException", e);
         } catch (IOException e) {
@@ -590,24 +683,24 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(3, processCode);// 处理码
             reqMessage.setFieldString(4, formatAmt);// 交易金额
             reqMessage.setFieldString(11, traceNo);// 系统跟踪号
-            if (null != validity && "".equals(validity)) {
+            if (null != validity && !"".equals(validity)) {
                 reqMessage.setFieldString(14, validity);// 卡有效期
             }
             reqMessage.setFieldString(22, posInputType);// POS输入方式
-            if (null != sequenceNumber && "".equals(sequenceNumber)) {
+            if (null != sequenceNumber && !"".equals(sequenceNumber)) {
                 reqMessage.setFieldString(23, sequenceNumber);// 卡片序列号
             }
             reqMessage.setFieldString(24, "009");// NII
             reqMessage.setFieldString(25, "14");// 服务点条件码 14代表POS
-            if (null != secondTrackData && "".equals(secondTrackData))
+            if (null != secondTrackData && !"".equals(secondTrackData))
                 reqMessage.setFieldString(35, secondTrackData);// 二磁道数据
-            if (null != thirdTrackData && "".equals(thirdTrackData))
+            if (null != thirdTrackData && !"".equals(thirdTrackData))
                 reqMessage.setFieldString(36, thirdTrackData);// 三磁道数据
             reqMessage.setFieldString(38, oldAuthCode);// 原消费交易授权号
             reqMessage.setFieldString(41, getTerminalId());// 终端号
             reqMessage.setFieldString(42, getMerchantId());// 商户号
             reqMessage.setFieldString(49, "156");// 货币代码
-            if (null != pin && "".equals(pin))
+            if (null != pin && !"".equals(pin))
                 reqMessage.setFieldString(52, pin);// 个人识别码
             reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());// 自定义域 交易批次号+操作员号+票据号
             reqMessage.setFieldString(62, "0200" + oldTraceNo
@@ -618,9 +711,9 @@ public class Traner extends AbsTraner {
             macData.append(processCode);
             macData.append(formatAmt);
             macData.append(traceNo);
-            macData.append("0" + currency);
+            macData.append("0").append(currency);
 
-            byte[] bcdMacData = Utils.ASCII_To_BCD(macData.toString().getBytes());
+            byte[] bcdMacData = HexUtil.parseHex(macData.toString());
             byte[] terminalByte = getTerminalId().getBytes();
 
             ByteBuffer buf = ByteBuffer.allocate(bcdMacData.length + terminalByte.length);
@@ -632,6 +725,7 @@ public class Traner extends AbsTraner {
 
             //检查是否需要签到或参数下载
             cs.checkMessage(respMessage);
+            field56Handle(respMessage);
         } catch (PackagingException e) {
             LOGGER.debug("when stagesPay happen PackagingException", e);
         } catch (IOException e) {
@@ -666,7 +760,7 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(3, processCode);
             reqMessage.setFieldString(4, formatAmt);
             reqMessage.setFieldString(11, traceNo);
-            if (null != validity && "".equals(validity)) {
+            if (null != validity && !"".equals(validity)) {
                 reqMessage.setFieldString(14, validity);// 卡有效期
             }
             reqMessage.setFieldString(22, "901");
@@ -678,16 +772,16 @@ public class Traner extends AbsTraner {
             String field48 = "9003905" + "9106" + stagesId + String.format("%02d", stagesCount);
             reqMessage.setFieldString(48, field48);
             reqMessage.setFieldString(49, currency);
-            reqMessage.setField(52, ByteBuffer.wrap(Utils.ASCII_To_BCD(getPin(cardNo, pin).getBytes())));
+            reqMessage.setFieldString(52, getPin(cardNo, pin));
             reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());
             StringBuilder macData = new StringBuilder();
             macData.append(cardNo.length() % 2 == 0 ? cardNo : "0" + cardNo);
             macData.append(processCode);
             macData.append(formatAmt);
             macData.append(traceNo);
-            macData.append("0" + currency);
+            macData.append("0").append(currency);
 
-            byte[] bcdMacData = Utils.ASCII_To_BCD(macData.toString().getBytes());
+            byte[] bcdMacData = HexUtil.parseHex(macData.toString());
             byte[] terminalByte = getTerminalId().getBytes();
 
             ByteBuffer buf = ByteBuffer.allocate(bcdMacData.length + terminalByte.length);
@@ -699,7 +793,7 @@ public class Traner extends AbsTraner {
 
             //检查是否需要签到或参数下载
             cs.checkMessage(respMessage);
-
+            field56Handle(respMessage);
         } catch (PackagingException e) {
             LOGGER.debug("when stagesPay happen PackagingException", e);
         } catch (IOException e) {
@@ -745,20 +839,20 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(3, processCode);
             reqMessage.setFieldString(4, formatAmt);
             reqMessage.setFieldString(11, traceNo);
-            if (null != validity && "".equals(validity)) {
+            if (null != validity && !"".equals(validity)) {
                 reqMessage.setFieldString(14, validity);// 卡有效期
             }
             reqMessage.setFieldString(22, posInputType);
-            if (null != sequenceNumber && "".equals(sequenceNumber)) {
+            if (null != sequenceNumber && !"".equals(sequenceNumber)) {
                 reqMessage.setFieldString(23, sequenceNumber);// 卡片序列号
             }
             reqMessage.setFieldString(24, "009");// NII
             reqMessage.setFieldString(25, "14");// 服务点条件码 14代表POS
 
-            if (null != secondTrackData && "".equals(secondTrackData)) {
+            if (null != secondTrackData && !"".equals(secondTrackData)) {
                 reqMessage.setFieldString(35, secondTrackData);// 二磁道数据
             }
-            if (null != thirdTrackData && "".equals(thirdTrackData)) {
+            if (null != thirdTrackData && !"".equals(thirdTrackData)) {
                 reqMessage.setFieldString(36, thirdTrackData);// 三磁道数据
             }
             reqMessage.setFieldString(38, oldAuthCode);// 原消费交易授权号
@@ -769,8 +863,9 @@ public class Traner extends AbsTraner {
             String field48 = "9003905" + "9106" + stagesId + String.format("%02d", stagesCount);
             reqMessage.setFieldString(48, field48);
             reqMessage.setFieldString(49, currency);
-            if (null != pin && "".equals(pin))
+            if (null != pin && !"".equals(pin)) {
                 reqMessage.setFieldString(52, pin);// 个人识别码
+            }
             reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());// 自定义域 交易批次号+操作员号+票据号
             reqMessage.setFieldString(62, "0200" + oldTraceNo
                     + oldTransDate + oldTransTime);// 自定义域 信息类型码+系统跟踪号+交易日期和时间
@@ -780,9 +875,9 @@ public class Traner extends AbsTraner {
             macData.append(processCode);
             macData.append(formatAmt);
             macData.append(traceNo);
-            macData.append("0" + currency);
+            macData.append("0").append(currency);
 
-            byte[] bcdMacData = Utils.ASCII_To_BCD(macData.toString().getBytes());
+            byte[] bcdMacData = HexUtil.parseHex(macData.toString());
             byte[] terminalByte = getTerminalId().getBytes();
 
             ByteBuffer buf = ByteBuffer.allocate(bcdMacData.length + terminalByte.length);
@@ -794,7 +889,7 @@ public class Traner extends AbsTraner {
 
             //检查是否需要签到或参数下载
             cs.checkMessage(respMessage);
-
+            field56Handle(respMessage);
         } catch (PackagingException e) {
             LOGGER.debug("when stagesPay happen PackagingException", e);
         } catch (IOException e) {
@@ -832,7 +927,7 @@ public class Traner extends AbsTraner {
         String traceNo = getTraceNo();
         String currency = "156";
         IMessage respMessage = null;
-        IMessage reqMessage = null;
+        IMessage reqMessage;
         try {
             reqMessage = createMessage();
             reqMessage.setFieldString(0, "0220");
@@ -840,15 +935,18 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(3, processCode);// 处理码
             reqMessage.setFieldString(4, formatAmt);// 交易金额
             reqMessage.setFieldString(11, traceNo);// 系统跟踪号
-            if (null != validity && "".equals(validity)) {
+            if (null != validity && !"".equals(validity)) {
                 reqMessage.setFieldString(14, validity);// 卡有效期
             }
             reqMessage.setFieldString(22, posInputType);// POS输入方式
+            if (null != sequenceNumber && !"".equals(sequenceNumber)) {
+                reqMessage.setFieldString(23, sequenceNumber);// 卡片序列号
+            }
             reqMessage.setFieldString(24, "009");// NII
             reqMessage.setFieldString(25, "14");// 服务点条件码 14代表POS
-            if (null != secondTrackData && "".equals(secondTrackData))
+            if (null != secondTrackData && !"".equals(secondTrackData))
                 reqMessage.setFieldString(35, secondTrackData);// 二磁道数据
-            if (null != thirdTrackData && "".equals(thirdTrackData))
+            if (null != thirdTrackData && !"".equals(thirdTrackData))
                 reqMessage.setFieldString(36, thirdTrackData);// 三磁道数据
             reqMessage.setFieldString(38, oldAuthCode);// 原消费交易授权号
             reqMessage.setFieldString(41, getTerminalId());// 终端号
@@ -856,8 +954,9 @@ public class Traner extends AbsTraner {
             // 使用90子域，值为”905”；还需要使用91子域以上送期数与PLAN ID
             reqMessage.setFieldString(48, "90039059106" + stagesId + stagesCount);
             reqMessage.setFieldString(49, "156");// 货币代码
-            if (null != pin && "".equals(pin))
+            if (null != pin && !"".equals(pin)) {
                 reqMessage.setFieldString(52, pin);// 个人识别码
+            }
             reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());// 自定义域 交易批次号+操作员号+票据号
             reqMessage.setFieldString(62, "0200" + oldTraceNo
                     + oldTransDate + oldTransTime);// 自定义域 信息类型码+系统跟踪号+交易日期和时间
@@ -867,9 +966,9 @@ public class Traner extends AbsTraner {
             macData.append(processCode);
             macData.append(formatAmt);
             macData.append(traceNo);
-            macData.append("0" + currency);
+            macData.append("0").append(currency);
 
-            byte[] bcdMacData = Utils.ASCII_To_BCD(macData.toString().getBytes());
+            byte[] bcdMacData = HexUtil.parseHex(macData.toString());
             byte[] terminalByte = getTerminalId().getBytes();
 
             ByteBuffer buf = ByteBuffer.allocate(bcdMacData.length + terminalByte.length);
@@ -881,6 +980,7 @@ public class Traner extends AbsTraner {
 
             //检查是否需要签到或参数下载
             cs.checkMessage(respMessage);
+            field56Handle(respMessage);
         } catch (PackagingException e) {
             LOGGER.debug("when stagesPay happen PackagingException", e);
         } catch (IOException e) {
@@ -920,28 +1020,28 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(3, processCode);
             reqMessage.setFieldString(4, formatAmt);
             reqMessage.setFieldString(11, traceNo);
-            if (null != validity && "".equals(validity)) {
+            if (null != validity && !"".equals(validity)) {
                 reqMessage.setFieldString(14, validity);
             }
             reqMessage.setFieldString(22, posInputType);
-            if (null != sequenceNumber && "".equals(sequenceNumber)) {
+            if (null != sequenceNumber && !"".equals(sequenceNumber)) {
                 reqMessage.setFieldString(23, sequenceNumber);
             }
             reqMessage.setFieldString(24, "009");
             reqMessage.setFieldString(25, "14");
-            if (null != secondTrackData && "".equals(secondTrackData)) {
+            if (null != secondTrackData && !"".equals(secondTrackData)) {
                 reqMessage.setFieldString(35, secondTrackData);
             }
-            if (null != thirdTrackData && "".equals(thirdTrackData)) {
+            if (null != thirdTrackData && !"".equals(thirdTrackData)) {
                 reqMessage.setFieldString(36, thirdTrackData);
             }
             reqMessage.setFieldString(41, getTerminalId());
             reqMessage.setFieldString(42, getMerchantId());
             reqMessage.setFieldString(49, currency);
-            if (null != pin && "".equals(pin)) {
+            if (null != pin && !"".equals(pin)) {
                 reqMessage.setFieldString(52, pin);
             }
-            if (null != pin && "".equals(pin)) {
+            if (null != icCardData && !"".equals(icCardData)) {
                 reqMessage.setFieldString(55, icCardData);
             }
             reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());
@@ -950,9 +1050,9 @@ public class Traner extends AbsTraner {
             macData.append(processCode);
             macData.append(formatAmt);
             macData.append(traceNo);
-            macData.append("0" + currency);
+            macData.append("0").append(currency);
 
-            byte[] bcdMacData = Utils.ASCII_To_BCD(macData.toString().getBytes());
+            byte[] bcdMacData = HexUtil.parseHex(macData.toString());
             byte[] terminalByte = getTerminalId().getBytes();
 
             ByteBuffer buf = ByteBuffer.allocate(bcdMacData.length + terminalByte.length);
@@ -964,7 +1064,7 @@ public class Traner extends AbsTraner {
 
             //检查是否需要签到或参数下载
             cs.checkMessage(respMessage);
-
+            field56Handle(respMessage);
         } catch (PackagingException e) {
             LOGGER.debug("when stagesPay happen PackagingException", e);
         } catch (IOException e) {
@@ -1007,24 +1107,24 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(3, processCode);// 处理码
             reqMessage.setFieldString(4, formatAmt);// 交易金额
             reqMessage.setFieldString(11, traceNo);// 系统跟踪号
-            if (null != validity && "".equals(validity))
+            if (null != validity && !"".equals(validity))
                 reqMessage.setFieldString(14, validity);// 卡有效期
             reqMessage.setFieldString(22, posInputType);// POS输入方式
-            if (null != sequenceNumber && "".equals(sequenceNumber))
+            if (null != sequenceNumber && !"".equals(sequenceNumber))
                 reqMessage.setFieldString(23, sequenceNumber);// 卡片序列号
             reqMessage.setFieldString(24, "009");// NII
             reqMessage.setFieldString(25, "14");// 服务点条件码 14代表POS
-            if (null != secondTrackData && "".equals(secondTrackData)) {
+            if (null != secondTrackData && !"".equals(secondTrackData)) {
                 reqMessage.setFieldString(35, secondTrackData);// 二磁道数据
             }
-            if (null != thirdTrackData && "".equals(thirdTrackData)) {
+            if (null != thirdTrackData && !"".equals(thirdTrackData)) {
                 reqMessage.setFieldString(36, thirdTrackData);// 三磁道数据
             }
             reqMessage.setFieldString(38, oldAuthCode);// 原消费交易授权号
             reqMessage.setFieldString(41, getTerminalId());// 终端号
             reqMessage.setFieldString(42, getMerchantId());// 商户号
             reqMessage.setFieldString(49, "156");// 货币代码
-            if (null != pin && "".equals(pin))
+            if (null != pin && !"".equals(pin))
                 reqMessage.setFieldString(52, pin);// 个人识别码
             reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());// 自定义域 交易批次号+操作员号+票据号
             reqMessage.setFieldString(62, "0200" + oldTraceNo
@@ -1035,9 +1135,9 @@ public class Traner extends AbsTraner {
             macData.append(processCode);
             macData.append(formatAmt);
             macData.append(traceNo);
-            macData.append("0" + currency);
+            macData.append("0").append(currency);
 
-            byte[] bcdMacData = Utils.ASCII_To_BCD(macData.toString().getBytes());
+            byte[] bcdMacData = HexUtil.parseHex(macData.toString());
             byte[] terminalByte = getTerminalId().getBytes();
 
             ByteBuffer buf = ByteBuffer.allocate(bcdMacData.length + terminalByte.length);
@@ -1049,6 +1149,7 @@ public class Traner extends AbsTraner {
 
             //检查是否需要签到或参数下载
             cs.checkMessage(respMessage);
+            field56Handle(respMessage);
         } catch (PackagingException e) {
             LOGGER.debug("when stagesPay happen PackagingException", e);
         } catch (IOException e) {
@@ -1086,25 +1187,25 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(3, processCode);
             reqMessage.setFieldString(4, formatAmt);
             reqMessage.setFieldString(11, traceNo);
-            if (null != validity && "".equals(validity)) {
+            if (null != validity && !"".equals(validity)) {
                 reqMessage.setFieldString(14, validity);
             }
             reqMessage.setFieldString(22, posInputType);
-            if (null != sequenceNumber && "".equals(sequenceNumber)) {
+            if (null != sequenceNumber && !"".equals(sequenceNumber)) {
                 reqMessage.setFieldString(23, sequenceNumber);
             }
             reqMessage.setFieldString(24, "009");
             reqMessage.setFieldString(25, "14");
-            if (null != secondTrackData && "".equals(secondTrackData)) {
+            if (null != secondTrackData && !"".equals(secondTrackData)) {
                 reqMessage.setFieldString(35, secondTrackData);
             }
-            if (null != thirdTrackData && "".equals(thirdTrackData)) {
+            if (null != thirdTrackData && !"".equals(thirdTrackData)) {
                 reqMessage.setFieldString(36, thirdTrackData);
             }
             reqMessage.setFieldString(41, getTerminalId());
             reqMessage.setFieldString(42, getMerchantId());
             reqMessage.setFieldString(49, currency);
-            if (null != pin && "".equals(pin)) {
+            if (null != pin && !"".equals(pin)) {
                 reqMessage.setFieldString(52, pin);
             }
             reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());
@@ -1113,9 +1214,9 @@ public class Traner extends AbsTraner {
             macData.append(processCode);
             macData.append(formatAmt);
             macData.append(traceNo);
-            macData.append("0" + currency);
+            macData.append("0").append(currency);
 
-            byte[] bcdMacData = Utils.ASCII_To_BCD(macData.toString().getBytes());
+            byte[] bcdMacData = HexUtil.parseHex(macData.toString());
             byte[] terminalByte = getTerminalId().getBytes();
 
             ByteBuffer buf = ByteBuffer.allocate(bcdMacData.length + terminalByte.length);
@@ -1124,7 +1225,7 @@ public class Traner extends AbsTraner {
             reqMessage.setField(64, getMac(buf));
 
             respMessage = sendTran(reqMessage);
-            // TODO 39域返回Z9向IST发送预授权完成通知
+            // 39域返回Z9向IST发送预授权完成通知
             if ("Z9".equals(respMessage.getFieldString(39))) {
                 IMessage noticeMessage = preAuthCompleteNotice(reqMessage,
                         respMessage.getFieldString(12), respMessage.getFieldString(13));
@@ -1137,6 +1238,7 @@ public class Traner extends AbsTraner {
 
             //检查是否需要签到或参数下载
             cs.checkMessage(respMessage);
+            field56Handle(respMessage);
         } catch (PackagingException e) {
             LOGGER.debug("when stagesPay happen PackagingException", e);
         } catch (IOException e) {
@@ -1187,7 +1289,7 @@ public class Traner extends AbsTraner {
 
         String traceNo = getTraceNo();
         IMessage respMessage = null;
-        IMessage reqMessage = null;
+        IMessage reqMessage;
         try {
             reqMessage = createMessage();
             reqMessage.setFieldString(0, "0220");
@@ -1234,9 +1336,9 @@ public class Traner extends AbsTraner {
             macData.append(completeMessage.getFieldString(3));
             macData.append(completeMessage.getFieldString(4));
             macData.append(traceNo);
-            macData.append("0" + completeMessage.getFieldString(49));
+            macData.append("0").append(completeMessage.getFieldString(49));
 
-            byte[] bcdMacData = Utils.ASCII_To_BCD(macData.toString().getBytes());
+            byte[] bcdMacData = HexUtil.parseHex(macData.toString());
             byte[] terminalByte = getTerminalId().getBytes();
 
             ByteBuffer buf = ByteBuffer.allocate(bcdMacData.length + terminalByte.length);
@@ -1247,6 +1349,7 @@ public class Traner extends AbsTraner {
             respMessage = sendTran(reqMessage);
 
             // TODO 通知未返回的处理，存储等待下笔交易上送
+            field56Handle(respMessage);
         } catch (PackagingException e) {
             LOGGER.debug("when stagesPay happen PackagingException", e);
         } catch (IOException e) {

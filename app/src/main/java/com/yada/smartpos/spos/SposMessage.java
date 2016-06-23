@@ -3,7 +3,7 @@ package com.yada.smartpos.spos;
 import com.newland.pos.sdk.util.BytesUtils;
 import com.newland.pos.sdk.util.ISO8583;
 import com.newland.pos.sdk.util.ISO8583Exception;
-import com.yada.sdk.device.pos.util.Utils;
+import com.payneteasy.tlv.HexUtil;
 import com.yada.sdk.packages.PackagingException;
 import com.yada.sdk.packages.transaction.IMessage;
 
@@ -65,33 +65,27 @@ class SposMessage implements IMessage {
         return sb.append("spos").append(termId).append(batchNo).append(traceNo).append(mti).toString();
     }
 
-    @Override
-    public ByteBuffer getTpduFromAddress() throws PackagingException {
+    public ByteBuffer getTpduFromAddress() {
         return tpduFromAddress;
     }
 
-    @Override
-    public ByteBuffer getTpduToAddress() throws PackagingException {
+    public ByteBuffer getTpduToAddress() {
         return tpduToAddress;
     }
 
-    @Override
-    public void setTpduId(ByteBuffer tpduId) throws PackagingException {
+    public void setTpduId(ByteBuffer tpduId) {
         this.tpduId = ByteBuffer.wrap(tpduId.array());
     }
 
-    @Override
-    public void setVersion(ByteBuffer version) throws PackagingException {
+    public void setVersion(ByteBuffer version) {
         this.version = ByteBuffer.wrap(version.array());
     }
 
-    @Override
-    public void setTpduFromAddress(ByteBuffer tpduFromAddress) throws PackagingException {
+    public void setTpduFromAddress(ByteBuffer tpduFromAddress) {
         this.tpduFromAddress = ByteBuffer.wrap(tpduFromAddress.array());
     }
 
-    @Override
-    public void setTpduToAddress(ByteBuffer tpduToAddress) throws PackagingException {
+    public void setTpduToAddress(ByteBuffer tpduToAddress) {
         this.tpduToAddress = ByteBuffer.wrap(tpduToAddress.array());
     }
 
@@ -106,7 +100,7 @@ class SposMessage implements IMessage {
         byteBuffer.put(tpduFromAddress.array());
         byteBuffer.put(version.array());
         byteBuffer.put(iso8583.packBytes());
-        pack = Utils.encodeHexString(byteBuffer.array());
+        pack = HexUtil.toHexString(byteBuffer.array());
         return byteBuffer.array();
     }
 
@@ -115,7 +109,7 @@ class SposMessage implements IMessage {
         tpduToAddress = ByteBuffer.wrap(Arrays.copyOfRange(bytes, 1, 3));
         tpduFromAddress = ByteBuffer.wrap(Arrays.copyOfRange(bytes, 3, 5));
         version = ByteBuffer.wrap(Arrays.copyOfRange(bytes, 5, 7));
-        pack = Utils.encodeHexString(bytes);
+        pack = HexUtil.toHexString(bytes);
         iso8583.unpack(Arrays.copyOfRange(bytes, 7, bytes.length));
     }
 

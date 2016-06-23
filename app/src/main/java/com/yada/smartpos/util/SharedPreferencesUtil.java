@@ -82,11 +82,12 @@ public class SharedPreferencesUtil {
         Set<String> set = new HashSet<>();
         try {
             SharedPreferences preferences = context.getSharedPreferences(filename, Context.MODE_PRIVATE);
-            return preferences.getStringSet("reverse", set);
+            set = preferences.getStringSet("reverse", set);
+            preferences.getStringSet("reverse", new HashSet<String>());
         } catch (Exception e) {
             e.printStackTrace();
-            return set;
         }
+        return set;
     }
 
     public static boolean remove(Context context, String key) {

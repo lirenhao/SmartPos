@@ -10,6 +10,7 @@ import android.widget.Toast;
 import com.newland.mtype.module.common.emv.AIDConfig;
 import com.newland.mtype.module.common.emv.CAPublicKey;
 import com.newland.mtype.util.ISOUtils;
+import com.payneteasy.tlv.HexUtil;
 import com.yada.sdk.device.encryption.IEncryption;
 import com.yada.sdk.packages.PackagingException;
 import com.yada.sdk.packages.transaction.IPacker;
@@ -25,7 +26,6 @@ import com.yada.smartpos.spos.VirtualPos;
 import com.yada.smartpos.util.Const;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 public class MainActivity extends Activity {
 
@@ -111,11 +111,11 @@ public class MainActivity extends Activity {
         k21Device.connectDevice();
         initEmv();
 
-        packer = new SposPacker(this);
+        packer = new SposPacker(this, HexUtil.parseHex("60001200001306"));
         IEncryption encryption = new EncryptionPos();
         String MAIN_KEY = "8FF97B609D81C5EA4AE715BEB2F9B57D";
-        virtualPos = new VirtualPos("104110070110814", "11000897", packer, "10.2.54.15", 6789, MAIN_KEY,
-                50000, encryption, ByteBuffer.wrap(ISOUtils.hex2byte("60001200001306")), mainActivity);
+        virtualPos = new VirtualPos("104110083981000", "83981000", packer, "10.2.54.15", 1000, MAIN_KEY,
+                50000, encryption, mainActivity);
 
         fragmentManager = getFragmentManager();
         fragmentHandler = new Handler() {

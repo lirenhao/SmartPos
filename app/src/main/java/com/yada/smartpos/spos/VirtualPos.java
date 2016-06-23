@@ -8,11 +8,13 @@ import com.yada.sdk.packages.PackagingException;
 import com.yada.sdk.packages.transaction.IMessage;
 import com.yada.sdk.packages.transaction.IPacker;
 import com.yada.smartpos.activity.MainActivity;
+import com.yada.smartpos.util.SharedPreferencesUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class VirtualPos implements IVirtualPos<Traner> {
@@ -34,20 +36,19 @@ public class VirtualPos implements IVirtualPos<Traner> {
     private IPacker packer;
     private ISequenceGenerator traceNoSeqGenerator;
     private ISequenceGenerator cerNoSeqGenerator;
-    private ByteBuffer head;
     // 可阻塞的队列
     private LinkedBlockingQueue<IMessage> queue;
 
     public VirtualPos(String merchantId, String terminalId, IPacker packer,
                       String serverIp, int serverPort, String zmkTmk, int timeout,
-                      IEncryption encryptionMachine, ByteBuffer head, MainActivity mainActivity) {
+                      IEncryption encryptionMachine, MainActivity mainActivity) {
         this(merchantId, terminalId, DEFAULT_TELLER_NO, packer, serverIp, serverPort,
-                zmkTmk, timeout, encryptionMachine, head, mainActivity);
+                zmkTmk, timeout, encryptionMachine, mainActivity);
     }
 
     public VirtualPos(String merchantId, String terminalId, String tellerNo, IPacker packer,
                       String serverIp, int serverPort, String zmkTmk, int timeout,
-                      IEncryption encryption, ByteBuffer head, MainActivity mainActivity) {
+                      IEncryption encryption, MainActivity mainActivity) {
         this.merchantId = merchantId;
         this.terminalId = terminalId;
         this.tellerNo = tellerNo;
@@ -56,14 +57,13 @@ public class VirtualPos implements IVirtualPos<Traner> {
         this.timeout = timeout;
         this.terminalAuth = new TerminalAuth(encryption);
         terminalAuth.setTmk(zmkTmk);
-        this.head = head;
         this.batchNo = DEFAULT_BATCH_NO;
         this.packer = packer;
         this.traceNoSeqGenerator = new SequenceGenerator(mainActivity, "traceNo");
         this.cerNoSeqGenerator = new SequenceGenerator(mainActivity, "cerNo");
         this.queue = new LinkedBlockingQueue<IMessage>();
         //加载存储的冲正交易
-        load();
+        load(mainActivity);
         //执行工作线程
         new Thread(new WorkThread()).start();
     }
@@ -73,7 +73,7 @@ public class VirtualPos implements IVirtualPos<Traner> {
         checkSingIn();
         Traner traner = new Traner(merchantId, terminalId, tellerNo, batchNo,
                 packer, serverIp, serverPort, timeout, new CheckSignIn(this),
-                terminalAuth, traceNoSeqGenerator, cerNoSeqGenerator, head, queue);
+                terminalAuth, traceNoSeqGenerator, cerNoSeqGenerator, queue);
         return traner;
     }
 
@@ -81,7 +81,7 @@ public class VirtualPos implements IVirtualPos<Traner> {
         if (needSignin) {
             Traner traner = new Traner(merchantId, terminalId, tellerNo, batchNo,
                     packer, serverIp, serverPort, timeout, new CheckSignIn(this),
-                    terminalAuth, traceNoSeqGenerator, cerNoSeqGenerator, head, queue);
+                    terminalAuth, traceNoSeqGenerator, cerNoSeqGenerator, queue);
 
             SigninInfo si = traner.singIn();
             batchNo = si.batchNo;
@@ -94,7 +94,7 @@ public class VirtualPos implements IVirtualPos<Traner> {
         if (needParamDownload) {
             Traner traner = new Traner(merchantId, terminalId, tellerNo, batchNo,
                     packer, serverIp, serverPort, timeout, new CheckSignIn(this),
-                    terminalAuth, traceNoSeqGenerator, cerNoSeqGenerator, head, queue);
+                    terminalAuth, traceNoSeqGenerator, cerNoSeqGenerator, queue);
             traner.paramDownload();
             traner.close();
             needParamDownload = false;
@@ -129,7 +129,15 @@ public class VirtualPos implements IVirtualPos<Traner> {
     /**
      * 读取硬盘上的持久化文件，并将内容放入到queue后，删除该文件
      */
-    protected void load() {
+    protected void load(MainActivity mainActivity) {
+        Set<String> set = SharedPreferencesUtil.getReverseParam(mainActivity);
+        for(String message: set){
+            try {
+                queue.add(packer.unpack(ByteBuffer.wrap(message.getBytes())));
+            } catch (PackagingException e) {
+                e.printStackTrace();
+            }
+        }
         // TODO 持久化文件
     }
 

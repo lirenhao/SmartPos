@@ -23,8 +23,8 @@ public class SignInHandler {
         mainActivity.getTraner().singIn();
     }
 
-    public void paramDownload() {
-        // TODO 参数下载
+    public void paramDownload() throws IOException, PackagingException {
+        mainActivity.getTraner().paramDownload();
     }
 
     private void loadWorkingKey(String field48) {
