@@ -17,6 +17,7 @@ import com.newland.mtype.module.common.light.LightType;
 import com.newland.mtype.module.common.swiper.SwipResult;
 import com.newland.mtype.module.common.swiper.SwiperReadModel;
 import com.newland.mtype.util.ISOUtils;
+import com.payneteasy.tlv.HexUtil;
 import com.yada.smartpos.R;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
@@ -83,10 +84,10 @@ public class SwipeCardFragment extends Fragment {
                                         ((App) mainActivity.getApplication()).getTransData().setAccount(swipResult.getAccount().getAcctNo());
                                         if (swipResult.getSecondTrackData() != null)
                                             ((App) mainActivity.getApplication()).getTransData().setSecondTrackData(
-                                                    ISOUtils.hexString(ISOUtils.str2bcd(new String(swipResult.getSecondTrackData()), false)));
+                                                    HexUtil.toHexString(ISOUtils.str2bcd(new String(swipResult.getSecondTrackData()), false)));
                                         if (swipResult.getThirdTrackData() != null)
                                             ((App) mainActivity.getApplication()).getTransData().setThirdTrackData(
-                                                    ISOUtils.hexString(swipResult.getThirdTrackData()));
+                                                    HexUtil.toHexString(ISOUtils.str2bcd(new String(swipResult.getThirdTrackData()), false)));
                                         mainActivity.getSwipeCardWaitThreat().notifyThread();
                                     } catch (Exception e) {
                                         // 读卡异常重新读卡

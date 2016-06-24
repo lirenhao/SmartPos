@@ -6,8 +6,7 @@ import com.newland.mtype.module.common.emv.EmvTransInfo;
 import com.newland.mtype.module.common.emv.SecondIssuanceRequest;
 import com.newland.mtype.module.common.emv.level2.EmvCardholderCertType;
 import com.newland.mtype.tlv.TLVPackage;
-import com.newland.mtype.util.ISOUtils;
-import com.newland.pos.sdk.util.BytesUtils;
+import com.payneteasy.tlv.HexUtil;
 import com.yada.sdk.packages.PackagingException;
 import com.yada.sdk.packages.transaction.IMessage;
 import com.yada.smartpos.activity.App;
@@ -92,7 +91,7 @@ public class SimpleTransferListener implements EmvTransListener {
             transInfo.getOnLinePin();
             // 交易成功、交易授受
             TLVPackage tlvPackage = transInfo.setExternalInfoPackage(L_55TAGS);
-            mainActivity.showMessage(">>>>55域打包集合:" + ISOUtils.hexString(tlvPackage.pack()) + "\r\n", MessageTag.DATA);
+            mainActivity.showMessage(">>>>55域打包集合:" + HexUtil.toHexString(tlvPackage.pack()) + "\r\n", MessageTag.DATA);
         } else {
             mainActivity.showMessage("错误的qpboc状态返回！" + transInfo.getExecuteRslt() + "\r\n", MessageTag.DATA);
         }
@@ -103,7 +102,7 @@ public class SimpleTransferListener implements EmvTransListener {
         ((App) mainActivity.getApplication()).getTransData().setAccount(transInfo.getCardNo());
         if (isSuccess) {
             TLVPackage tlvPackage = transInfo.setExternalInfoPackage(L_55TAGS);
-            mainActivity.showMessage(">>>>55域打包集合:" + ISOUtils.hexString(tlvPackage.pack()) + "\r\n", MessageTag.DATA);
+            mainActivity.showMessage(">>>>55域打包集合:" + HexUtil.toHexString(tlvPackage.pack()) + "\r\n", MessageTag.DATA);
         }
         // TODO EMV联机交易发卡行返回成功而卡片拒绝要冲正
         // ((App) mainActivity.getApplication()).getTransResult().setResCode("success");
@@ -135,22 +134,22 @@ public class SimpleTransferListener implements EmvTransListener {
         ((App) mainActivity.getApplication()).getTransData().setAmount(new BigDecimal(transInfo.getAmountAuthorisedNumeric()));
         ((App) mainActivity.getApplication()).getTransData().setValidDate(transInfo.getCardExpirationDate().substring(0, 4));
         ((App) mainActivity.getApplication()).getTransData().setSequenceNumber(transInfo.getCardSequenceNumber());
-        ((App) mainActivity.getApplication()).getTransData().setSecondTrackData(ISOUtils.hexString(transInfo.getTrack_2_eqv_data()).substring(0, 37));
-        ((App) mainActivity.getApplication()).getTransData().setIcCardData(ISOUtils.hexString(tlvPackage.pack()));
+        ((App) mainActivity.getApplication()).getTransData().setSecondTrackData(HexUtil.toHexString(transInfo.getTrack_2_eqv_data()).substring(0, 37));
+        ((App) mainActivity.getApplication()).getTransData().setIcCardData(HexUtil.toHexString(tlvPackage.pack()));
 
 
         /** 二磁道加密
          if (null != transInfo.getTrack_2_eqv_data()) {
-         mainActivity.showMessage(">>>>二磁道明文:" + ISOUtils.hexString(transInfo.getTrack_2_eqv_data()) + "\r\n", MessageTag.DATA);
+         mainActivity.showMessage(">>>>二磁道明文:" + HexUtil.toHexString(transInfo.getTrack_2_eqv_data()) + "\r\n", MessageTag.DATA);
          SwiperModuleImpl swiper = new SwiperModuleImpl();
-         SwipResult swipResult = swiper.k21CalculateTrackData(ISOUtils.hexString(transInfo.getTrack_2_eqv_data()), null, new WorkingKey(index), SupportMSDAlgorithm.getMSDAlgorithm(encryptAlgorithm));
-         mainActivity.showMessage(">>>>二磁道密文:" + (swipResult.getSecondTrackData() == null ? null : ISOUtils.hexString(swipResult.getSecondTrackData())) + "\r\n", MessageTag.DATA);
+         SwipResult swipResult = swiper.k21CalculateTrackData(HexUtil.toHexString(transInfo.getTrack_2_eqv_data()), null, new WorkingKey(index), SupportMSDAlgorithm.getMSDAlgorithm(encryptAlgorithm));
+         mainActivity.showMessage(">>>>二磁道密文:" + (swipResult.getSecondTrackData() == null ? null : HexUtil.toHexString(swipResult.getSecondTrackData())) + "\r\n", MessageTag.DATA);
          }
          **/
         // [步骤1]：从该处transInfo中获取ic卡卡片信息后，发送银联8583交易
         IMessage message = null;
         TransData transData = ((App) mainActivity.getApplication()).getTransData();
-        switch(transData.getTransType()){
+        switch (transData.getTransType()) {
             case PAY:
                 message = mainActivity.getTraner().pay(transData.getAccount(), transData.getAmount().toString(),
                         transData.getValidDate(), "901", transData.getSequenceNumber(),
@@ -159,20 +158,20 @@ public class SimpleTransferListener implements EmvTransListener {
                 break;
             case REVOKE:
                 message = mainActivity.getTraner().revoke(transData.getAccount(), transData.getAmount().toString(),
-                        transData.getValidDate(), "901", transData.getSequenceNumber(),transData.getSecondTrackData(),
+                        transData.getValidDate(), "901", transData.getSequenceNumber(), transData.getSecondTrackData(),
                         transData.getThirdTrackData(), transData.getPin(), transData.getOldAuthCode(),
                         transData.getOldTraceNo(), transData.getOldTransDate(), transData.getOldTransTime());
                 break;
             case REFUND:
                 message = mainActivity.getTraner().revoke(transData.getAccount(), transData.getAmount().toString(),
-                        transData.getValidDate(), "901", transData.getSequenceNumber(),transData.getSecondTrackData(),
+                        transData.getValidDate(), "901", transData.getSequenceNumber(), transData.getSecondTrackData(),
                         transData.getThirdTrackData(), transData.getPin(), transData.getOldAuthCode(),
                         transData.getOldTraceNo(), transData.getOldTransDate(), transData.getOldTransTime());
                 break;
         }
 
         if (null != message && "00".equals(message.getFieldString(39))) {
-            tlvPackage.unpack(BytesUtils.hexStringToBytes(message.getFieldString(55)));
+            tlvPackage.unpack(HexUtil.parseHex(message.getFieldString(55)));
             SecondIssuanceRequest request = new SecondIssuanceRequest();
             request.setAuthorisationResponseCode(message.getFieldString(39));// 取自银联8583规范39域值,该参数按交易实际值填充
             request.setIssuerAuthenticationData(tlvPackage.getValue(0x91));//取自银联8583规范 55域0x91值,该参数按交易实际值填充
@@ -218,8 +217,7 @@ public class SimpleTransferListener implements EmvTransListener {
         message.obj = "inputPin";
         message.sendToTarget();
         mainActivity.getInputPinWaitThreat().waitForRslt();
-        controller.sendPinInputResult(ISOUtils.hex2byte(
-                ((App) mainActivity.getApplication()).getTransData().getPin()));
+        controller.sendPinInputResult(HexUtil.parseHex(((App) mainActivity.getApplication()).getTransData().getPin()));
     }
 
     /**

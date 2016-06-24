@@ -1,7 +1,7 @@
 package com.yada.smartpos.encryption;
 
 import com.newland.mtype.module.common.pin.*;
-import com.newland.mtype.util.ISOUtils;
+import com.payneteasy.tlv.HexUtil;
 import com.yada.sdk.device.encryption.IEncryption;
 import com.yada.smartpos.module.PinInputModule;
 import com.yada.smartpos.module.impl.PinInputModuleImpl;
@@ -26,7 +26,7 @@ public class EncryptionPos implements IEncryption {
     @Override
     public String getLmkTmk(String zmkTmk) {
         pinInputModule.loadMainKey(KekUsingType.MAIN_KEY, Const.MKIndexConst.DEFAULT_MK_INDEX,
-                ISOUtils.hex2byte(zmkTmk), null, 2);
+                HexUtil.parseHex(zmkTmk), null, 2);
         return null;
     }
 
@@ -40,7 +40,7 @@ public class EncryptionPos implements IEncryption {
     @Override
     public String getLmkTak(String lmkTmk, String tmkTak) {
         pinInputModule.loadWorkingKey(WorkingKeyType.MAC, Const.MKIndexConst.DEFAULT_MK_INDEX,
-                Const.MacWKIndexConst.DEFAULT_MAC_WK_INDEX, ISOUtils.hex2byte(tmkTak), null);
+                Const.MacWKIndexConst.DEFAULT_MAC_WK_INDEX, HexUtil.parseHex(tmkTak), null);
         return null;
     }
 
@@ -54,7 +54,7 @@ public class EncryptionPos implements IEncryption {
     @Override
     public String getLmkTpk(String lmkTmk, String tmkTpk) {
         pinInputModule.loadWorkingKey(WorkingKeyType.PININPUT, Const.MKIndexConst.DEFAULT_MK_INDEX,
-                Const.PinWKIndexConst.DEFAULT_PIN_WK_INDEX, ISOUtils.hex2byte(tmkTpk), null);
+                Const.PinWKIndexConst.DEFAULT_PIN_WK_INDEX, HexUtil.parseHex(tmkTpk), null);
         return null;
     }
 

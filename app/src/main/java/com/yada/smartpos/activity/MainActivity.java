@@ -9,7 +9,6 @@ import android.os.Message;
 import android.widget.Toast;
 import com.newland.mtype.module.common.emv.AIDConfig;
 import com.newland.mtype.module.common.emv.CAPublicKey;
-import com.newland.mtype.util.ISOUtils;
 import com.payneteasy.tlv.HexUtil;
 import com.yada.sdk.device.encryption.IEncryption;
 import com.yada.sdk.packages.PackagingException;
@@ -114,7 +113,7 @@ public class MainActivity extends Activity {
         packer = new SposPacker(this, HexUtil.parseHex("60001200001306"));
         IEncryption encryption = new EncryptionPos();
         String MAIN_KEY = "8FF97B609D81C5EA4AE715BEB2F9B57D";
-        virtualPos = new VirtualPos("104110083981000", "83981000", packer, "10.2.54.15", 1000, MAIN_KEY,
+        virtualPos = new VirtualPos("104310157324774", "11010021", packer, "10.2.54.15", 1000, MAIN_KEY,
                 50000, encryption, mainActivity);
 
         fragmentManager = getFragmentManager();
@@ -183,17 +182,17 @@ public class MainActivity extends Activity {
         emvModule.initEmvModule(mainActivity);
         // emv添加aid
         AIDConfig aidConfig = new AIDConfig();
-        aidConfig.setAid(ISOUtils.hex2byte("A000000333010102"));// 0x9f06
+        aidConfig.setAid(HexUtil.parseHex("A000000333010102"));// 0x9f06
         aidConfig.setAppSelectIndicator(0);// 0xDF01
         aidConfig.setAppVersionNumberTerminal(new byte[]{0x00, (byte) 0x20});// 0x9f09
-        aidConfig.setTacDefault(ISOUtils.hex2byte("FC78FCF8F0"));// 0xDF11
-        aidConfig.setTacOnLine(ISOUtils.hex2byte("FC78FCF8F0"));// 0xDF12
-        aidConfig.setTacDenial(ISOUtils.hex2byte("0010000000"));// 0xDF13
+        aidConfig.setTacDefault(HexUtil.parseHex("FC78FCF8F0"));// 0xDF11
+        aidConfig.setTacOnLine(HexUtil.parseHex("FC78FCF8F0"));// 0xDF12
+        aidConfig.setTacDenial(HexUtil.parseHex("0010000000"));// 0xDF13
         aidConfig.setTerminalFloorLimit(new byte[]{0x00, 0x00, 0x00, 0x05});// 0x9f1b
         aidConfig.setThresholdValueForBiasedRandomSelection(new byte[]{0x00, 0x00, 0x00, (byte) 0x28});// 0xDF15
         aidConfig.setMaxTargetPercentageForBiasedRandomSelection(32);// 0xDF16
         aidConfig.setTargetPercentageForRandomSelection(14);// 0xDF17
-        aidConfig.setDefaultDDOL(ISOUtils.hex2byte("9F3704"));// 0xDF14
+        aidConfig.setDefaultDDOL(HexUtil.parseHex("9F3704"));// 0xDF14
         aidConfig.setOnLinePinCapability(1);// 0xDF18
         aidConfig.setEcTransLimit(new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00});// 0x9F7B
         aidConfig.setNciccOffLineFloorLimit(new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00});// 0xDF19
@@ -206,17 +205,17 @@ public class MainActivity extends Activity {
             mainActivity.showMessage("装载AID1错误！", Const.MessageTag.ERROR);
 
         AIDConfig aidConfig2 = new AIDConfig();
-        aidConfig2.setAid(ISOUtils.hex2byte("A000000333010101"));// 0x9f06
+        aidConfig2.setAid(HexUtil.parseHex("A000000333010101"));// 0x9f06
         aidConfig2.setAppSelectIndicator(0);// 0xDF01
         aidConfig2.setAppVersionNumberTerminal(new byte[]{0x00, (byte) 0x20});// 0x9f09
-        aidConfig2.setTacDefault(ISOUtils.hex2byte("FC78FCF8F0"));// 0xDF11
-        aidConfig2.setTacOnLine(ISOUtils.hex2byte("FC78FCF8F0"));// 0xDF12
-        aidConfig2.setTacDenial(ISOUtils.hex2byte("0010000000"));// 0xDF13
+        aidConfig2.setTacDefault(HexUtil.parseHex("FC78FCF8F0"));// 0xDF11
+        aidConfig2.setTacOnLine(HexUtil.parseHex("FC78FCF8F0"));// 0xDF12
+        aidConfig2.setTacDenial(HexUtil.parseHex("0010000000"));// 0xDF13
         aidConfig2.setTerminalFloorLimit(new byte[]{0x00, 0x00, 0x00, 0x05});// 0x9f1b
         aidConfig2.setThresholdValueForBiasedRandomSelection(new byte[]{0x00, 0x00, 0x00, (byte) 0x28});// 0xDF15
         aidConfig2.setMaxTargetPercentageForBiasedRandomSelection(32);// 0xDF16
         aidConfig2.setTargetPercentageForRandomSelection(14);// 0xDF17
-        aidConfig2.setDefaultDDOL(ISOUtils.hex2byte("9F3704"));// 0xDF14
+        aidConfig2.setDefaultDDOL(HexUtil.parseHex("9F3704"));// 0xDF14
         aidConfig2.setOnLinePinCapability(1);// 0xDF18
         aidConfig2.setEcTransLimit(new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00});// 0x9F7B
         aidConfig2.setNciccOffLineFloorLimit(new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00});// 0xDF19
@@ -230,17 +229,17 @@ public class MainActivity extends Activity {
             mainActivity.showMessage("装载AID2错误！", Const.MessageTag.ERROR);
 
         AIDConfig aidConfig3 = new AIDConfig();
-        aidConfig3.setAid(ISOUtils.hex2byte("A000000333010103"));// 0x9f06
+        aidConfig3.setAid(HexUtil.parseHex("A000000333010103"));// 0x9f06
         aidConfig3.setAppSelectIndicator(0);// 0xDF01
         aidConfig3.setAppVersionNumberTerminal(new byte[]{0x00, (byte) 0x20});// 0x9f09
-        aidConfig3.setTacDefault(ISOUtils.hex2byte("FC78FCF8F0"));// 0xDF11
-        aidConfig3.setTacOnLine(ISOUtils.hex2byte("FC78FCF8F0"));// 0xDF12
-        aidConfig3.setTacDenial(ISOUtils.hex2byte("0010000000"));// 0xDF13
+        aidConfig3.setTacDefault(HexUtil.parseHex("FC78FCF8F0"));// 0xDF11
+        aidConfig3.setTacOnLine(HexUtil.parseHex("FC78FCF8F0"));// 0xDF12
+        aidConfig3.setTacDenial(HexUtil.parseHex("0010000000"));// 0xDF13
         aidConfig3.setTerminalFloorLimit(new byte[]{0x00, 0x00, 0x00, 0x05});// 0x9f1b
         aidConfig3.setThresholdValueForBiasedRandomSelection(new byte[]{0x00, 0x00, 0x00, (byte) 0x28});// 0xDF15
         aidConfig3.setMaxTargetPercentageForBiasedRandomSelection(32);// 0xDF16
         aidConfig3.setTargetPercentageForRandomSelection(14);// 0xDF17
-        aidConfig3.setDefaultDDOL(ISOUtils.hex2byte("9F3704"));// 0xDF14
+        aidConfig3.setDefaultDDOL(HexUtil.parseHex("9F3704"));// 0xDF14
         aidConfig3.setOnLinePinCapability(1);// 0xDF18
         aidConfig3.setEcTransLimit(new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00});// 0x9F7B
         aidConfig3.setNciccOffLineFloorLimit(new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00});// 0xDF19
@@ -254,17 +253,17 @@ public class MainActivity extends Activity {
             mainActivity.showMessage("装载AID3错误！", Const.MessageTag.ERROR);
 
         AIDConfig aidConfig4 = new AIDConfig();
-        aidConfig4.setAid(ISOUtils.hex2byte("A000000333010106"));// 0x9f06
+        aidConfig4.setAid(HexUtil.parseHex("A000000333010106"));// 0x9f06
         aidConfig4.setAppSelectIndicator(0);// 0xDF01
         aidConfig4.setAppVersionNumberTerminal(new byte[]{0x00, (byte) 0x20});// 0x9f09
-        aidConfig4.setTacDefault(ISOUtils.hex2byte("FC78FCF8F0"));// 0xDF11
-        aidConfig4.setTacOnLine(ISOUtils.hex2byte("FC78FCF8F0"));// 0xDF12
-        aidConfig4.setTacDenial(ISOUtils.hex2byte("0010000000"));// 0xDF13
+        aidConfig4.setTacDefault(HexUtil.parseHex("FC78FCF8F0"));// 0xDF11
+        aidConfig4.setTacOnLine(HexUtil.parseHex("FC78FCF8F0"));// 0xDF12
+        aidConfig4.setTacDenial(HexUtil.parseHex("0010000000"));// 0xDF13
         aidConfig4.setTerminalFloorLimit(new byte[]{0x00, 0x00, 0x00, 0x05});// 0x9f1b
         aidConfig4.setThresholdValueForBiasedRandomSelection(new byte[]{0x00, 0x00, 0x00, (byte) 0x28});// 0xDF15
         aidConfig4.setMaxTargetPercentageForBiasedRandomSelection(32);// 0xDF16
         aidConfig4.setTargetPercentageForRandomSelection(14);// 0xDF17
-        aidConfig4.setDefaultDDOL(ISOUtils.hex2byte("9F3704"));// 0xDF14
+        aidConfig4.setDefaultDDOL(HexUtil.parseHex("9F3704"));// 0xDF14
         aidConfig4.setOnLinePinCapability(1);// 0xDF18
         aidConfig4.setEcTransLimit(new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00});// 0x9F7B
         aidConfig4.setNciccOffLineFloorLimit(new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00});// 0xDF19
@@ -280,9 +279,9 @@ public class MainActivity extends Activity {
 
         // EMV添加公钥
         int P9f22_1 = 1;
-        byte[] df02_2 = ISOUtils.hex2byte("BBE9066D2517511D239C7BFA77884144AE20C7372F515147E8CE6537C54C0A6A4D45F8CA4D290870CDA59F1344EF71D17D3F35D92F3F06778D0D511EC2A7DC4FFEADF4FB1253CE37A7B2B5A3741227BEF72524DA7A2B7B1CB426BEE27BC513B0CB11AB99BC1BC61DF5AC6CC4D831D0848788CD74F6D543AD37C5A2B4C5D5A93B");
-        byte[] df04_2 = ISOUtils.hex2byte("000003");
-        byte[] df03_2 = ISOUtils.hex2byte("E881E390675D44C2DD81234DCE29C3F5AB2297A0");
+        byte[] df02_2 = HexUtil.parseHex("BBE9066D2517511D239C7BFA77884144AE20C7372F515147E8CE6537C54C0A6A4D45F8CA4D290870CDA59F1344EF71D17D3F35D92F3F06778D0D511EC2A7DC4FFEADF4FB1253CE37A7B2B5A3741227BEF72524DA7A2B7B1CB426BEE27BC513B0CB11AB99BC1BC61DF5AC6CC4D831D0848788CD74F6D543AD37C5A2B4C5D5A93B");
+        byte[] df04_2 = HexUtil.parseHex("000003");
+        byte[] df03_2 = HexUtil.parseHex("E881E390675D44C2DD81234DCE29C3F5AB2297A0");
         CAPublicKey caKey = new CAPublicKey(P9f22_1, 1, 1, df02_2, df04_2, df03_2, "20091231");
         boolean addCAPK = emvModule.addCAPublicKey(new byte[]{(byte) 0xA0, 0x00, 0x00, 0x03, 0x33}, caKey);
         if (!addCAPK)

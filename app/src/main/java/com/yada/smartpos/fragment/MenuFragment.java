@@ -218,7 +218,7 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
                     @Override
                     public void run() {
                         try {
-                            signInHandler.signIn();
+                            signInHandler.paramDownload();
                         } catch (IOException | PackagingException e) {
                             e.printStackTrace();
                             exceptionHandler(e);

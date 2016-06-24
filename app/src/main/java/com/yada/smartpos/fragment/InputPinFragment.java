@@ -11,7 +11,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import com.newland.mtype.event.DeviceEventListener;
 import com.newland.mtype.module.common.pin.*;
-import com.newland.mtype.util.ISOUtils;
+import com.payneteasy.tlv.HexUtil;
 import com.yada.smartpos.R;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
@@ -160,11 +160,11 @@ public class InputPinFragment extends Fragment {
                 // 确定
                 if (event.getInputLen() == 0) {
                     ((App) (mainActivity).getApplication()).getTransData()
-                            .setPin(ISOUtils.hexString(new byte[6]));
+                            .setPin(HexUtil.toHexString(new byte[6]));
                 } else {
                     // 输入成功
                     ((App) (mainActivity).getApplication()).getTransData()
-                            .setPin(ISOUtils.hexString(event.getEncrypPin()));
+                            .setPin(HexUtil.toHexString(event.getEncrypPin()));
                 }
                 mainActivity.getInputPinWaitThreat().notifyThread();
             } else {

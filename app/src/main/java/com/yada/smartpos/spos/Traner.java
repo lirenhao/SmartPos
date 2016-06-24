@@ -111,9 +111,9 @@ public class Traner extends AbsTraner {
 
         pd.termBasicParam = paramDownloadHandle1();
         // 第二块参数下载用于TMS扩展参数下载，暂不去查询
-        paramDownloadHandle2("2020080101000000");
-        pd.aidListParam = paramDownloadHandle3();
-        pd.ridListParam = paramDownloadHandle4();
+//        paramDownloadHandle2("2020080101000000");
+//        pd.aidListParam = paramDownloadHandle3();
+//        pd.ridListParam = paramDownloadHandle4();
     }
 
     /**
@@ -162,7 +162,7 @@ public class Traner extends AbsTraner {
         reqMessage.setFieldString(56, HexUtil.toHexString(builder.buildArray()));
 
         IMessage respMessage = sendTran(reqMessage);
-        return new Block02(respMessage.getField(56).array());
+        return new Block02(HexUtil.parseHex(respMessage.getFieldString(56)));
     }
 
     /**
@@ -192,7 +192,7 @@ public class Traner extends AbsTraner {
 
             // TODO 判断查询是否成功、返回报文是否有56域
 
-            BerTlvs tlv56 = tlvParser.parse(respMessage.getField(56).array());
+            BerTlvs tlv56 = tlvParser.parse(HexUtil.parseHex(respMessage.getFieldString(56)));
             // DF26中包含的是应用列表
             df26s.add(tlv56.find(new BerTag(0xdf, 0x26)).getHexValue());
             // DF27中包含的是参数下装报文索引号
@@ -286,7 +286,7 @@ public class Traner extends AbsTraner {
 
         IMessage respMessage = sendTran(reqMessage);
 
-        BerTlv tlv56 = tlvParser.parseConstructed(respMessage.getField(56).array());
+        BerTlv tlv56 = tlvParser.parseConstructed(HexUtil.parseHex(respMessage.getFieldString(56)));
         BerTlvs tlvDF24 = tlvParser.parse(tlv56.getBytesValue());
 
         for (int i = 0; i < tlvDF24.getList().size(); i = i + 2) {
@@ -330,17 +330,27 @@ public class Traner extends AbsTraner {
             }
 
             // A000000333是银联的RID
-            if(rid.equals("A000000333")){
+            if (rid.equals("A000000333")) {
                 // TODO 银联国密存储在7-12位
                 for (int i = 7; i <= 12; i++) {
+                    String df28 = null;
+                    switch (i) {
+                        case 10:
+                            df28 = "0A";
+                            break;
+                        case 11:
+                            df28 = "0B";
+                            break;
+                        case 12:
+                            df28 = "0C";
+                            break;
+                        default:
+                            df28 = "0" + i;
+                    }
                     BerTlvBuilder builder = new BerTlvBuilder();
                     builder.addHex(new BerTag(0x9f, 0x06), rid);
                     builder.addHex(new BerTag(0xdf, 0x25), rids.get(rid));
-                    if (i > 9){
-                        builder.addHex(new BerTag(0xdf, 0x28), "" + i);
-                    } else {
-                        builder.addHex(new BerTag(0xdf, 0x28), "0" + i);
-                    }
+                    builder.addHex(new BerTag(0xdf, 0x28), df28);
                     reqMessage.setFieldString(56, HexUtil.toHexString(builder.buildArray()));
 
                     IMessage respMessage = sendTran(reqMessage);
@@ -555,9 +565,9 @@ public class Traner extends AbsTraner {
             cs.checkMessage(respMessage);
             field56Handle(respMessage);
         } catch (PackagingException e) {
-            LOGGER.debug("when stagesPay happen PackagingException", e);
+            LOGGER.debug("when pay happen PackagingException", e);
         } catch (IOException e) {
-            LOGGER.debug("when stagesPay happen IOException", e);
+            LOGGER.debug("when pay happen IOException", e);
             addElementToQueue(reqMessage);
         }
         return respMessage;
