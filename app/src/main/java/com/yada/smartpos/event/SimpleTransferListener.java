@@ -104,8 +104,6 @@ public class SimpleTransferListener implements EmvTransListener {
         if (isSuccess) {
             ResultHandler.result(mainActivity, respMessage);
         }
-        // TODO EMV联机交易发卡行返回成功而卡片拒绝要冲正
-        // ((App) mainActivity.getApplication()).getTransResult().setResCode("success");
         mainActivity.getWaitThreat().notifyThread();
     }
 
@@ -115,7 +113,6 @@ public class SimpleTransferListener implements EmvTransListener {
         mainActivity.showMessage("emv交易失败" + "\r\n", MessageTag.ERROR);
         mainActivity.showMessage(e.getMessage() + "\r\n", MessageTag.ERROR);
 
-        // ((App) mainActivity.getApplication()).getTransResult().setResCode("fail");
         mainActivity.getWaitThreat().notifyThread();
     }
 
@@ -167,6 +164,8 @@ public class SimpleTransferListener implements EmvTransListener {
                 message.obj = "proofNo";
                 message.sendToTarget();
                 mainActivity.getProofNoWaitThreat().waitForRslt();
+                ((App) mainActivity.getApplication()).getTransData().setOldTraceNo(
+                        ((App) mainActivity.getApplication()).getTransData().getOldProofNo());
 
                 // 选择交易日期
                 message = mainActivity.getFragmentHandler().obtainMessage(8);
