@@ -4,7 +4,7 @@ import com.payneteasy.tlv.*;
 import com.yada.sdk.device.encryption.TerminalAuth;
 import com.yada.sdk.device.pos.AbsTraner;
 import com.yada.sdk.device.pos.ISequenceGenerator;
-import com.yada.sdk.device.pos.posp.params.Block02;
+import com.yada.sdk.device.pos.posp.params.*;
 import com.yada.sdk.net.FixLenPackageSplitterFactory;
 import com.yada.sdk.packages.PackagingException;
 import com.yada.sdk.packages.transaction.IMessage;
@@ -106,14 +106,32 @@ public class Traner extends AbsTraner {
     }
 
     //参数下载
-    public void paramDownload() throws PackagingException, IOException {
-        ParamDownload pd = new ParamDownload();
+    public ParamInfo paramDownload() throws PackagingException, IOException {
+        ParamInfo paramInfo = new ParamInfo();
 
-        pd.termBasicParam = paramDownloadHandle1();
+        paramInfo.setBlock01(paramDownloadHandle1());
         // 第二块参数下载用于TMS扩展参数下载，暂不去查询
-//        paramDownloadHandle2("2020080101000000");
-//        pd.aidListParam = paramDownloadHandle3();
-//        pd.ridListParam = paramDownloadHandle4();
+//        paramInfo.setBlock02(paramDownloadHandle2("2020080101000000"));
+//        paramInfo.setBlock03Map(paramDownloadHandle3());
+//        Map<String, String> ridParams = paramDownloadHandle4();
+//        Map<String, Block04_1> block04_1Map = new HashMap<>();
+//        Map<String, Block04_2> block04_2Map = new HashMap<>();
+//        for (String rid : ridParams.keySet()) {
+//            long df28 = Long.parseLong(rid.substring(10), 16);
+//            if (df28 < 7) {
+//                // 国际公钥
+//                Block04_1 block04_1 = new Block04_1(HexUtil.parseHex(ridParams.get(rid)));
+//                block04_1Map.put(rid, block04_1);
+//            } else {
+//                // 国密公钥
+//                Block04_2 block04_2 = new Block04_2(HexUtil.parseHex(ridParams.get(rid)));
+//                block04_2Map.put(rid, block04_2);
+//            }
+//        }
+//        paramInfo.setBlock04_1Map(block04_1Map);
+//        paramInfo.setBlock04_2Map(block04_2Map);
+
+        return  paramInfo;
     }
 
     /**
@@ -123,7 +141,8 @@ public class Traner extends AbsTraner {
      * @throws PackagingException
      * @throws IOException
      */
-    public String paramDownloadHandle1() throws PackagingException, IOException {
+    public Block01 paramDownloadHandle1()
+            throws PackagingException, IOException {
         IMessage reqMessage = createMessage();
         reqMessage.setFieldString(0, "0800");
         reqMessage.setFieldString(3, "990000");
@@ -135,7 +154,7 @@ public class Traner extends AbsTraner {
 
         IMessage respMessage = sendTran(reqMessage);
 
-        return respMessage.getFieldString(48);
+        return new Block01(respMessage.getFieldString(48).substring(5));
     }
 
     /**
@@ -147,7 +166,8 @@ public class Traner extends AbsTraner {
      * @throws PackagingException
      * @throws IOException
      */
-    public Block02 paramDownloadHandle2(String version) throws PackagingException, IOException {
+    public Block02 paramDownloadHandle2(String version)
+            throws PackagingException, IOException {
         IMessage reqMessage = createMessage();
         reqMessage.setFieldString(0, "0800");
         reqMessage.setFieldString(3, "990000");
@@ -171,7 +191,8 @@ public class Traner extends AbsTraner {
      * @param df27value 参数下装报文索引号
      * @return aid、参数版本号列表
      */
-    public Map<String, String> aidQueryHandle(String df27value) throws PackagingException, IOException {
+    public Map<String, String> aidQueryHandle(String df27value)
+            throws PackagingException, IOException {
         List<String> df26s = new ArrayList<>();
         do {
             IMessage reqMessage = createMessage();
@@ -223,8 +244,9 @@ public class Traner extends AbsTraner {
      * @param df27value 参数下装报文索引号
      * @return 应用参数 9F06、DF01、9F09、DF11、DF12、DF13、9F1B、DF15、DF16、DF17、DF14、DF18、9F35、9F15、DF25、9F7B、DF40、DF20、DF21
      */
-    public List<String> paramDownloadHandle3(Map<String, String> aids, String df27value) throws IOException, PackagingException {
-        List<String> params = new ArrayList<>();
+    public Map<String, Block03> paramDownloadHandle3(Map<String, String> aids, String df27value)
+            throws IOException, PackagingException {
+        Map<String, Block03> params = new HashMap<>();
 
         // 当df27不为零时接着查询剩余的aid列表
         if (!df27value.equals("00")) {
@@ -250,7 +272,7 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(56, HexUtil.toHexString(builder.buildArray()));
 
             IMessage respMessage = sendTran(reqMessage);
-            params.add(respMessage.getFieldString(56));
+            params.put(aid, new Block03(HexUtil.parseHex(respMessage.getFieldString(56))));
         }
         return params;
     }
@@ -260,7 +282,7 @@ public class Traner extends AbsTraner {
      *
      * @return AID应用参数
      */
-    public List<String> paramDownloadHandle3() throws IOException, PackagingException {
+    public Map<String, Block03> paramDownloadHandle3() throws IOException, PackagingException {
         String df27value = "00";
         Map<String, String> aids = aidQueryHandle(df27value);
         return paramDownloadHandle3(aids, df27value);
@@ -304,8 +326,9 @@ public class Traner extends AbsTraner {
      * @param rids rid、参数版本号列表
      * @return 公钥参数
      */
-    public List<String> paramDownloadHandle4(Map<String, String> rids) throws PackagingException, IOException {
-        List<String> params = new ArrayList<>();
+    public Map<String, String> paramDownloadHandle4(Map<String, String> rids)
+            throws PackagingException, IOException {
+        Map<String, String> params = new HashMap<>();
 
         for (String rid : rids.keySet()) {
             IMessage reqMessage = createMessage();
@@ -326,14 +349,14 @@ public class Traner extends AbsTraner {
                 reqMessage.setFieldString(56, HexUtil.toHexString(builder.buildArray()));
 
                 IMessage respMessage = sendTran(reqMessage);
-                params.add(respMessage.getFieldString(56));
+                params.put(rid + "0" + i, respMessage.getFieldString(56));
             }
 
             // A000000333是银联的RID
             if (rid.equals("A000000333")) {
                 // TODO 银联国密存储在7-12位
                 for (int i = 7; i <= 12; i++) {
-                    String df28 = null;
+                    String df28;
                     switch (i) {
                         case 10:
                             df28 = "0A";
@@ -354,7 +377,7 @@ public class Traner extends AbsTraner {
                     reqMessage.setFieldString(56, HexUtil.toHexString(builder.buildArray()));
 
                     IMessage respMessage = sendTran(reqMessage);
-                    params.add(respMessage.getFieldString(56));
+                    params.put(rid + df28, respMessage.getFieldString(56));
                 }
             }
         }
@@ -367,7 +390,8 @@ public class Traner extends AbsTraner {
      *
      * @return 公钥参数
      */
-    public List<String> paramDownloadHandle4() throws PackagingException, IOException {
+    public Map<String, String> paramDownloadHandle4()
+            throws PackagingException, IOException {
         Map<String, String> rids = ridQueryHandle();
         return paramDownloadHandle4(rids);
     }

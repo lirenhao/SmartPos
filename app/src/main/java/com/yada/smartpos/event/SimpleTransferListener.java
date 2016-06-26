@@ -11,6 +11,7 @@ import com.yada.sdk.packages.PackagingException;
 import com.yada.sdk.packages.transaction.IMessage;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
+import com.yada.smartpos.handler.ResultHandler;
 import com.yada.smartpos.model.TransData;
 import com.yada.smartpos.util.Const.MessageTag;
 
@@ -26,6 +27,7 @@ public class SimpleTransferListener implements EmvTransListener {
 
     private MainActivity mainActivity;
     private List<Integer> L_55TAGS = new ArrayList<>();
+    private IMessage respMessage;
 
     public SimpleTransferListener(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
@@ -99,10 +101,8 @@ public class SimpleTransferListener implements EmvTransListener {
 
     @Override
     public void onEmvFinished(boolean isSuccess, EmvTransInfo transInfo) {
-        ((App) mainActivity.getApplication()).getTransData().setAccount(transInfo.getCardNo());
         if (isSuccess) {
-            TLVPackage tlvPackage = transInfo.setExternalInfoPackage(L_55TAGS);
-            mainActivity.showMessage(">>>>55域打包集合:" + HexUtil.toHexString(tlvPackage.pack()) + "\r\n", MessageTag.DATA);
+            ResultHandler.result(mainActivity, respMessage);
         }
         // TODO EMV联机交易发卡行返回成功而卡片拒绝要冲正
         // ((App) mainActivity.getApplication()).getTransResult().setResCode("success");
@@ -147,38 +147,69 @@ public class SimpleTransferListener implements EmvTransListener {
          }
          **/
         // [步骤1]：从该处transInfo中获取ic卡卡片信息后，发送银联8583交易
-        IMessage message = null;
         TransData transData = ((App) mainActivity.getApplication()).getTransData();
         switch (transData.getTransType()) {
             case PAY:
-                message = mainActivity.getTraner().pay(transData.getAccount(), transData.getAmount().toString(),
-                        transData.getValidDate(), "901", transData.getSequenceNumber(),
+                respMessage = mainActivity.getTraner().pay(transData.getAccount(), transData.getAmount().toString(),
+                        transData.getValidDate(), "051", transData.getSequenceNumber(),
                         transData.getSecondTrackData(), transData.getThirdTrackData(),
                         transData.getPin(), transData.getIcCardData());
                 break;
             case REVOKE:
-                message = mainActivity.getTraner().revoke(transData.getAccount(), transData.getAmount().toString(),
-                        transData.getValidDate(), "901", transData.getSequenceNumber(), transData.getSecondTrackData(),
+                respMessage = mainActivity.getTraner().revoke(transData.getAccount(), transData.getAmount().toString(),
+                        transData.getValidDate(), "051", transData.getSequenceNumber(), transData.getSecondTrackData(),
                         transData.getThirdTrackData(), transData.getPin(), transData.getOldAuthCode(),
                         transData.getOldTraceNo(), transData.getOldTransDate(), transData.getOldTransTime());
                 break;
             case REFUND:
-                message = mainActivity.getTraner().revoke(transData.getAccount(), transData.getAmount().toString(),
-                        transData.getValidDate(), "901", transData.getSequenceNumber(), transData.getSecondTrackData(),
+                // 输入原凭证号
+                Message message = mainActivity.getFragmentHandler().obtainMessage(4);
+                message.obj = "proofNo";
+                message.sendToTarget();
+                mainActivity.getProofNoWaitThreat().waitForRslt();
+
+                // 选择交易日期
+                message = mainActivity.getFragmentHandler().obtainMessage(8);
+                message.obj = "dateWheel";
+                message.sendToTarget();
+                mainActivity.getDateWheelWaitThreat().waitForRslt();
+
+                // 选择交易时间
+                message = mainActivity.getFragmentHandler().obtainMessage(9);
+                message.obj = "timeWheel";
+                message.sendToTarget();
+                mainActivity.getTimeWheelWaitThreat().waitForRslt();
+
+                // 输入授权号
+                message = mainActivity.getFragmentHandler().obtainMessage(5);
+                message.obj = "authCode";
+                message.sendToTarget();
+                mainActivity.getAuthCodeWaitThreat().waitForRslt();
+
+                // 输入退货金额
+                message = mainActivity.getFragmentHandler().obtainMessage(1);
+                message.obj = "amount";
+                message.sendToTarget();
+                mainActivity.getAmountWaitThreat().waitForRslt();
+
+                respMessage = mainActivity.getTraner().refund(transData.getAccount(), transData.getAmount().toString(),
+                        transData.getValidDate(), "051", transData.getSequenceNumber(), transData.getSecondTrackData(),
                         transData.getThirdTrackData(), transData.getPin(), transData.getOldAuthCode(),
                         transData.getOldTraceNo(), transData.getOldTransDate(), transData.getOldTransTime());
                 break;
         }
 
-        if (null != message && "00".equals(message.getFieldString(39))) {
-            tlvPackage.unpack(HexUtil.parseHex(message.getFieldString(55)));
+        if (null != respMessage && "00".equals(respMessage.getFieldString(39))) {
             SecondIssuanceRequest request = new SecondIssuanceRequest();
-            request.setAuthorisationResponseCode(message.getFieldString(39));// 取自银联8583规范39域值,该参数按交易实际值填充
-            request.setIssuerAuthenticationData(tlvPackage.getValue(0x91));//取自银联8583规范 55域0x91值,该参数按交易实际值填充
-            request.setIssuerScriptTemplate1(tlvPackage.getValue(0x71));//取自银联8583规范 55域0x71值,该参数按交易实际值填充
-            request.setIssuerScriptTemplate2(tlvPackage.getValue(0x72));//取自银联8583规范 55域0x72值,该参数按交易实际值填充
-            request.setAuthorisationCode(message.getFieldString(38));//取自银联8583规范 38域值,该参数按交易实际值填充
+            request.setAuthorisationResponseCode(respMessage.getFieldString(39));// 取自银联8583规范39域值,该参数按交易实际值填充
+            request.setAuthorisationCode(respMessage.getFieldString(38));//取自银联8583规范 38域值,该参数按交易实际值填充
 
+            if(null != respMessage.getFieldString(55)){
+                tlvPackage.unpack(HexUtil.parseHex(respMessage.getFieldString(55)));
+                request.setIssuerAuthenticationData(tlvPackage.getValue(0x91));//取自银联8583规范 55域0x91值,该参数按交易实际值填充
+                request.setIssuerScriptTemplate1(tlvPackage.getValue(0x71));//取自银联8583规范 55域0x71值,该参数按交易实际值填充
+                request.setIssuerScriptTemplate2(tlvPackage.getValue(0x72));//取自银联8583规范 55域0x72值,该参数按交易实际值填充
+            }
             // [步骤2].ic卡联机交易成功或者非接圈存交易，调用二次授权接口，等回调onemvfinished结束流程。
             controller.secondIssuance(request);
         } else {
@@ -201,7 +232,7 @@ public class SimpleTransferListener implements EmvTransListener {
     }
 
     @Override
-    public void onRequestAmountEntry(final EmvTransController controller, EmvTransInfo context) {
+    public void onRequestAmountEntry(final EmvTransController controller, EmvTransInfo transInfo) {
         // 调用输入金额界面
         Message message = mainActivity.getFragmentHandler().obtainMessage(1);
         message.obj = "amount";
@@ -212,6 +243,7 @@ public class SimpleTransferListener implements EmvTransListener {
     // IM81和N900会触发，ME30、ME31不会触发
     @Override
     public void onRequestPinEntry(EmvTransController controller, EmvTransInfo transInfo) throws Exception {
+        ((App) mainActivity.getApplication()).getTransData().setAccount(transInfo.getCardNo());
         // EMV调用密码键盘
         Message message = mainActivity.getFragmentHandler().obtainMessage(3);
         message.obj = "inputPin";

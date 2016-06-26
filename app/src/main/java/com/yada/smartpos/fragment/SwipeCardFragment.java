@@ -75,6 +75,7 @@ public class SwipeCardFragment extends Fragment {
                             EmvModule emvModule = new EmvModuleImpl();
                             emvModule.initEmvModule(mainActivity);
                             EmvTransController controller = emvModule.getEmvTransController(transListener);
+                            BigDecimal amount = ((App) mainActivity.getApplication()).getTransData().getAmount();
                             switch (((App) mainActivity.getApplication()).getTransData().getCardType()) {
                                 case MSCARD:
                                     SwiperModule swiper = new SwiperModuleImpl();
@@ -98,15 +99,21 @@ public class SwipeCardFragment extends Fragment {
                                     }
                                     break;
                                 case ICCARD:
-                                    controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.USING_STANDARD_PROCESSINGCODE,
-                                            ((App) mainActivity.getApplication()).getTransData().getAmount().movePointLeft(2),
-                                            new BigDecimal("0"), true);
+                                    if (null != amount) {
+                                        controller.startEmv(amount.movePointLeft(2), new BigDecimal("0"), true);
+                                    } else {
+                                        controller.startEmv(new BigDecimal("0"), new BigDecimal("0"), true);
+                                    }
                                     mainActivity.getSwipeCardWaitThreat().notifyThread();
                                     break;
                                 case RFCARD:
-                                    controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.EC_CONSUMPTION,
-                                            ((App) mainActivity.getApplication()).getTransData().getAmount().movePointLeft(2),
-                                            new BigDecimal("0"), true);
+                                    if (null != amount) {
+                                        controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.EC_CONSUMPTION,
+                                                amount.movePointLeft(2), new BigDecimal("0"), true);
+                                    } else {
+                                        controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.EC_CONSUMPTION,
+                                                new BigDecimal("0"), new BigDecimal("0"), true);
+                                    }
                                     mainActivity.getSwipeCardWaitThreat().notifyThread();
                                     break;
                                 default:

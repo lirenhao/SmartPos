@@ -1,13 +1,12 @@
 package com.yada.smartpos.handler;
 
-import com.yada.sdk.packages.PackagingException;
 import com.yada.sdk.packages.transaction.IMessage;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
 
 public class ResultHandler {
 
-    public static void result(MainActivity mainActivity, IMessage iMessage) throws PackagingException {
+    public static void result(MainActivity mainActivity, IMessage iMessage) {
 
         if (null != iMessage && "00".equals(iMessage.getFieldString(39))) {
             ((App) mainActivity.getApplication()).getTransResult().setTransCode("1");
