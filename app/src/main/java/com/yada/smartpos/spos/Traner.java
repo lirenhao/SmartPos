@@ -354,7 +354,7 @@ public class Traner extends AbsTraner {
 
             // A000000333是银联的RID
             if (rid.equals("A000000333")) {
-                // TODO 银联国密存储在7-12位
+                // 银联国密存储在7-12位
                 for (int i = 7; i <= 12; i++) {
                     String df28;
                     switch (i) {

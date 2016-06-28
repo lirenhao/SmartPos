@@ -11,7 +11,6 @@ import com.newland.mtype.module.common.emv.AIDConfig;
 import com.newland.mtype.module.common.emv.CAPublicKey;
 import com.payneteasy.tlv.HexUtil;
 import com.yada.sdk.device.encryption.IEncryption;
-import com.yada.sdk.packages.PackagingException;
 import com.yada.sdk.packages.transaction.IPacker;
 import com.yada.smartpos.R;
 import com.yada.smartpos.device.N900Device;
@@ -20,11 +19,8 @@ import com.yada.smartpos.fragment.*;
 import com.yada.smartpos.module.EmvModule;
 import com.yada.smartpos.module.impl.EmvModuleImpl;
 import com.yada.smartpos.spos.SposPacker;
-import com.yada.smartpos.spos.Traner;
 import com.yada.smartpos.spos.VirtualPos;
 import com.yada.smartpos.util.Const;
-
-import java.io.IOException;
 
 public class MainActivity extends Activity {
 
@@ -93,8 +89,8 @@ public class MainActivity extends Activity {
         return packer;
     }
 
-    public Traner getTraner() throws IOException, PackagingException {
-        return virtualPos.createTraner();
+    public VirtualPos getVirtualPos(){
+        return virtualPos;
     }
 
     @Override

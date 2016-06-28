@@ -88,7 +88,7 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
                     @Override
                     public void run() {
                         try {
-                            consumeHandler.sale();
+                            consumeHandler.pay();
                         } catch (IOException | PackagingException e) {
                             e.printStackTrace();
                             exceptionHandler(e);
@@ -127,7 +127,7 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
                     @Override
                     public void run() {
                         try {
-                            installmentHandler.sale();
+                            installmentHandler.pay();
                         } catch (PackagingException | IOException e) {
                             e.printStackTrace();
                             exceptionHandler(e);

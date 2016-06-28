@@ -19,11 +19,15 @@ public class SignInHandler {
     }
 
     public void signIn() throws IOException, PackagingException {
-        mainActivity.getTraner().singIn();
+        mainActivity.getVirtualPos().resetSingIn();
+        mainActivity.getVirtualPos().resetParamDownload();
+        mainActivity.getVirtualPos().createTraner();
     }
 
     public void paramDownload() throws IOException, PackagingException {
-        mainActivity.getTraner().paramDownload();
+        mainActivity.getVirtualPos().resetSingIn();
+        mainActivity.getVirtualPos().resetParamDownload();
+        mainActivity.getVirtualPos().createTraner();
     }
 
     private void loadWorkingKey(String field48) {

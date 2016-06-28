@@ -148,6 +148,7 @@ public class ProofNoFragment extends Fragment implements View.OnClickListener {
             case R.id.iv_enter:
                 if (inputValue.length() > 0) {
                     ((App) (mainActivity).getApplication()).getTransData().setOldProofNo(inputValue);
+                    ((App) mainActivity.getApplication()).getTransData().setOldTraceNo(inputValue);
                     mainActivity.getProofNoWaitThreat().notifyThread();
                 } else {
                     Toast.makeText(mainActivity, "请输入原凭证号！", Toast.LENGTH_SHORT).show();

@@ -8,11 +8,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import com.newland.mtype.ModuleType;
-import com.newland.mtype.common.InnerProcessingCode;
-import com.newland.mtype.common.ProcessingCode;
 import com.newland.mtype.event.DeviceEventListener;
 import com.newland.mtype.module.common.cardreader.OpenCardReaderEvent;
-import com.newland.mtype.module.common.emv.EmvTransController;
 import com.newland.mtype.module.common.light.LightType;
 import com.newland.mtype.module.common.swiper.SwipResult;
 import com.newland.mtype.module.common.swiper.SwiperReadModel;
@@ -21,19 +18,14 @@ import com.payneteasy.tlv.HexUtil;
 import com.yada.smartpos.R;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
-import com.yada.smartpos.event.EmvTransListener;
-import com.yada.smartpos.event.SimpleTransferListener;
 import com.yada.smartpos.module.CardReaderModule;
-import com.yada.smartpos.module.EmvModule;
 import com.yada.smartpos.module.IndicatorLightModule;
 import com.yada.smartpos.module.SwiperModule;
 import com.yada.smartpos.module.impl.CardReaderModuleImpl;
-import com.yada.smartpos.module.impl.EmvModuleImpl;
 import com.yada.smartpos.module.impl.IndicatorLightModuleImpl;
 import com.yada.smartpos.module.impl.SwiperModuleImpl;
 import com.yada.smartpos.util.Const;
 
-import java.math.BigDecimal;
 import java.util.concurrent.TimeUnit;
 
 public class SwipeCardFragment extends Fragment {
@@ -71,11 +63,6 @@ public class SwipeCardFragment extends Fragment {
                             indicatorLight.turnOffLight(new LightType[]{LightType.BLUE_LIGHT});
                             ((App) mainActivity.getApplication()).getTransData().
                                     setCardType(openCardReaderEvent.getOpenCardReaderResult().getResponseCardTypes()[0]);
-                            EmvTransListener transListener = new SimpleTransferListener(mainActivity);
-                            EmvModule emvModule = new EmvModuleImpl();
-                            emvModule.initEmvModule(mainActivity);
-                            EmvTransController controller = emvModule.getEmvTransController(transListener);
-                            BigDecimal amount = ((App) mainActivity.getApplication()).getTransData().getAmount();
                             switch (((App) mainActivity.getApplication()).getTransData().getCardType()) {
                                 case MSCARD:
                                     SwiperModule swiper = new SwiperModuleImpl();
@@ -99,21 +86,10 @@ public class SwipeCardFragment extends Fragment {
                                     }
                                     break;
                                 case ICCARD:
-                                    if (null != amount) {
-                                        controller.startEmv(amount.movePointLeft(2), new BigDecimal("0"), true);
-                                    } else {
-                                        controller.startEmv(new BigDecimal("0"), new BigDecimal("0"), true);
-                                    }
                                     mainActivity.getSwipeCardWaitThreat().notifyThread();
                                     break;
                                 case RFCARD:
-                                    if (null != amount) {
-                                        controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.EC_CONSUMPTION,
-                                                amount.movePointLeft(2), new BigDecimal("0"), true);
-                                    } else {
-                                        controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.EC_CONSUMPTION,
-                                                new BigDecimal("0"), new BigDecimal("0"), true);
-                                    }
+                                    // TODO 挥卡的未处理
                                     mainActivity.getSwipeCardWaitThreat().notifyThread();
                                     break;
                                 default:

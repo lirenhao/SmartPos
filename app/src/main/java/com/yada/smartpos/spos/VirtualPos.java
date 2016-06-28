@@ -32,6 +32,7 @@ public class VirtualPos implements IVirtualPos<Traner> {
     private volatile boolean needSignin = true;
     private volatile boolean needParamDownload = true;
     private TerminalAuth terminalAuth;
+    private TerminalParam terminalParam;
     private String batchNo;
     private IPacker packer;
     private ISequenceGenerator traceNoSeqGenerator;
@@ -56,6 +57,7 @@ public class VirtualPos implements IVirtualPos<Traner> {
         this.serverPort = serverPort;
         this.timeout = timeout;
         this.terminalAuth = new TerminalAuth(encryption);
+        this.terminalParam = new TerminalParam(mainActivity);
         terminalAuth.setTmk(zmkTmk);
         this.batchNo = DEFAULT_BATCH_NO;
         this.packer = packer;
@@ -95,7 +97,10 @@ public class VirtualPos implements IVirtualPos<Traner> {
             Traner traner = new Traner(merchantId, terminalId, tellerNo, batchNo,
                     packer, serverIp, serverPort, timeout, new CheckSignIn(this),
                     terminalAuth, traceNoSeqGenerator, cerNoSeqGenerator, queue);
-            traner.paramDownload();
+            ParamInfo paramInfo = traner.paramDownload();
+            terminalParam.setBlock01(paramInfo.getBlock01());
+//            terminalParam.setAid(paramInfo.getBlock03Map());
+//            terminalParam.setCAPK(paramInfo.getBlock04_1Map(), paramInfo.getBlock04_2Map());
             traner.close();
             needParamDownload = false;
         }

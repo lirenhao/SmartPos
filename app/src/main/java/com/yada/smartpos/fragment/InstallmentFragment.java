@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.yada.sdk.device.pos.posp.params.Block01;
 import com.yada.smartpos.R;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
@@ -70,7 +71,9 @@ public class InstallmentFragment extends Fragment implements View.OnClickListene
             }
         });
 
-        final String[] planIds = new String[] { "A025", "B014", "IP03", "R204" , "T015", "LA02", "IP00"};
+        Block01 block01 = ((App) mainActivity.getApplication()).getParamBlock01();
+        final String[] planIds = new String[]{block01.plant1, block01.plant2, block01.plant3,
+                block01.plant4, block01.plant5, block01.plant6, block01.plant7, block01.plant8, block01.plant9};
         planDialog = new AlertDialog.Builder(mainActivity);
         planDialog.setTitle("计划ID");
         // 设置默认的值

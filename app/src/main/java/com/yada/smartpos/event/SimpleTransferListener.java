@@ -147,13 +147,13 @@ public class SimpleTransferListener implements EmvTransListener {
         TransData transData = ((App) mainActivity.getApplication()).getTransData();
         switch (transData.getTransType()) {
             case PAY:
-                respMessage = mainActivity.getTraner().pay(transData.getAccount(), transData.getAmount().toString(),
+                respMessage = mainActivity.getVirtualPos().createTraner().pay(transData.getAccount(), transData.getAmount().toString(),
                         transData.getValidDate(), "051", transData.getSequenceNumber(),
                         transData.getSecondTrackData(), transData.getThirdTrackData(),
                         transData.getPin(), transData.getIcCardData());
                 break;
             case REVOKE:
-                respMessage = mainActivity.getTraner().revoke(transData.getAccount(), transData.getAmount().toString(),
+                respMessage = mainActivity.getVirtualPos().createTraner().revoke(transData.getAccount(), transData.getAmount().toString(),
                         transData.getValidDate(), "051", transData.getSequenceNumber(), transData.getSecondTrackData(),
                         transData.getThirdTrackData(), transData.getPin(), transData.getOldAuthCode(),
                         transData.getOldTraceNo(), transData.getOldTransDate(), transData.getOldTransTime());
@@ -191,7 +191,7 @@ public class SimpleTransferListener implements EmvTransListener {
                 message.sendToTarget();
                 mainActivity.getAmountWaitThreat().waitForRslt();
 
-                respMessage = mainActivity.getTraner().refund(transData.getAccount(), transData.getAmount().toString(),
+                respMessage = mainActivity.getVirtualPos().createTraner().refund(transData.getAccount(), transData.getAmount().toString(),
                         transData.getValidDate(), "051", transData.getSequenceNumber(), transData.getSecondTrackData(),
                         transData.getThirdTrackData(), transData.getPin(), transData.getOldAuthCode(),
                         transData.getOldTraceNo(), transData.getOldTransDate(), transData.getOldTransTime());

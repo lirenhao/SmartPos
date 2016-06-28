@@ -1,13 +1,17 @@
 package com.yada.smartpos.handler;
 
-import android.os.Message;
+import com.newland.mtype.module.common.emv.EmvControllerListener;
+import com.newland.mtype.module.common.emv.EmvTransController;
 import com.newland.pos.sdk.util.BytesUtils;
 import com.yada.sdk.packages.PackagingException;
 import com.yada.sdk.packages.transaction.IMessage;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
+import com.yada.smartpos.event.*;
 import com.yada.smartpos.model.TransData;
 import com.yada.smartpos.model.TransResult;
+import com.yada.smartpos.module.EmvModule;
+import com.yada.smartpos.module.impl.EmvModuleImpl;
 import com.yada.smartpos.util.SharedPreferencesUtil;
 import com.yada.smartpos.util.TransType;
 
@@ -21,10 +25,11 @@ import java.nio.ByteBuffer;
 public class PreAuthHandler {
 
     private MainActivity mainActivity;
-    private Message message;
+    private TransHandleListener handleListener;
 
     public PreAuthHandler(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
+        this.handleListener = new TransHandleListener(mainActivity);
     }
 
     /**
@@ -35,34 +40,32 @@ public class PreAuthHandler {
         ((App) mainActivity.getApplication()).setTransResult(new TransResult());
         ((App) mainActivity.getApplication()).getTransData().setTransType(TransType.PRE_AUTH);
         // 输入金额
-        message = mainActivity.getFragmentHandler().obtainMessage(1);
-        message.obj = "amount";
-        message.sendToTarget();
-        mainActivity.getAmountWaitThreat().waitForRslt();
-
+        handleListener.amountView();
         // 启动刷卡
-        message = mainActivity.getFragmentHandler().obtainMessage(2);
-        message.obj = "swipeCard";
-        message.sendToTarget();
-        mainActivity.getSwipeCardWaitThreat().waitForRslt();
-
+        handleListener.swipeCardView();
         // 判断是IC卡还是磁条卡
         switch (((App) mainActivity.getApplication()).getTransData().getCardType()) {
             case MSCARD:
                 // 磁条卡输入密码
-                Message message = mainActivity.getFragmentHandler().obtainMessage(3);
-                message.obj = "inputPin";
-                message.sendToTarget();
-                mainActivity.getInputPinWaitThreat().waitForRslt();
+                handleListener.inputPinView();
                 // 联机交易
                 TransData transData = ((App) mainActivity.getApplication()).getTransData();
-                IMessage iMessage = mainActivity.getTraner().preAuth(transData.getAccount(), transData.getAmount().toString(),
+                IMessage iMessage = mainActivity.getVirtualPos().createTraner().preAuth(
+                        transData.getAccount(), transData.getAmount().toString(),
                         transData.getValidDate(), "901", transData.getSequenceNumber(),
                         transData.getSecondTrackData(), transData.getThirdTrackData(),
                         transData.getPin(), transData.getIcCardData());
                 ResultHandler.result(mainActivity, iMessage);
                 break;
             case ICCARD:
+                // 开启EMV流程
+                EmvControllerListener transListener = new PreAuthTransListener(mainActivity, handleListener);
+                EmvModule emvModule = new EmvModuleImpl();
+                emvModule.initEmvModule(mainActivity);
+                EmvTransController controller = emvModule.getEmvTransController(transListener);
+                BigDecimal amount = ((App) mainActivity.getApplication()).getTransData().getAmount();
+                // TODO 开启EMV预授权流程的参数设置需确认
+                controller.startEmv(amount.movePointLeft(2), new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             case RFCARD:
@@ -71,10 +74,7 @@ public class PreAuthHandler {
             default:
                 break;
         }
-
-        message = mainActivity.getFragmentHandler().obtainMessage(100);
-        message.obj = "result";
-        message.sendToTarget();
+        handleListener.resultView();
     }
 
     /**
@@ -84,56 +84,39 @@ public class PreAuthHandler {
         ((App) mainActivity.getApplication()).setTransData(new TransData());
         ((App) mainActivity.getApplication()).setTransResult(new TransResult());
         ((App) mainActivity.getApplication()).getTransData().setTransType(TransType.PRE_AUTH_REVOKE);
-        // TODO 输入主管密码
-
+        // 输入主管密码
+        handleListener.authPasswordView();
         // 刷卡
-        message = mainActivity.getFragmentHandler().obtainMessage(2);
-        message.obj = "swipeCard";
-        message.sendToTarget();
-        mainActivity.getSwipeCardWaitThreat().waitForRslt();
-
+        handleListener.swipeCardView();
         // 判断是IC卡还是磁条卡
         switch (((App) mainActivity.getApplication()).getTransData().getCardType()) {
             case MSCARD:
                 // 输入原凭证号
-                message = mainActivity.getFragmentHandler().obtainMessage(4);
-                message.obj = "proofNo";
-                message.sendToTarget();
-                mainActivity.getProofNoWaitThreat().waitForRslt();
-
+                handleListener.proofNoView();
                 // 选择交易日期
-                message = mainActivity.getFragmentHandler().obtainMessage(8);
-                message.obj = "dateWheel";
-                message.sendToTarget();
-                mainActivity.getDateWheelWaitThreat().waitForRslt();
-
+                handleListener.dateWheelView();
                 // 选择交易时间
-                message = mainActivity.getFragmentHandler().obtainMessage(9);
-                message.obj = "timeWheel";
-                message.sendToTarget();
-                mainActivity.getTimeWheelWaitThreat().waitForRslt();
-
+                handleListener.timeWheelView();
                 // 输入授权号
-                message = mainActivity.getFragmentHandler().obtainMessage(5);
-                message.obj = "authCode";
-                message.sendToTarget();
-                mainActivity.getAuthCodeWaitThreat().waitForRslt();
-
-                // 输入退货金额
-                message = mainActivity.getFragmentHandler().obtainMessage(1);
-                message.obj = "amount";
-                message.sendToTarget();
-                mainActivity.getAmountWaitThreat().waitForRslt();
-
+                handleListener.authCodeView();
+                // 输入撤销金额
+                handleListener.amountView();
                 // 联机交易
                 TransData transData = ((App) mainActivity.getApplication()).getTransData();
-                IMessage iMessage = mainActivity.getTraner().preAuthRevoke(transData.getAccount(), transData.getAmount().toString(),
+                IMessage iMessage = mainActivity.getVirtualPos().createTraner().preAuthRevoke(
+                        transData.getAccount(), transData.getAmount().toString(),
                         transData.getValidDate(), "901", transData.getSequenceNumber(), transData.getSecondTrackData(),
                         transData.getThirdTrackData(), transData.getPin(), transData.getOldAuthCode(),
                         transData.getOldTraceNo(), transData.getOldTransDate(), transData.getOldTransTime());
                 ResultHandler.result(mainActivity, iMessage);
                 break;
             case ICCARD:
+                // 开启EMV流程
+                EmvControllerListener transListener = new PreAuthRevokeListener(mainActivity, handleListener);
+                EmvModule emvModule = new EmvModuleImpl();
+                emvModule.initEmvModule(mainActivity);
+                EmvTransController controller = emvModule.getEmvTransController(transListener);
+                controller.startEmv(new BigDecimal("0"), new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             case RFCARD:
@@ -143,9 +126,7 @@ public class PreAuthHandler {
                 break;
         }
         // 显示结果
-        message = mainActivity.getFragmentHandler().obtainMessage(100);
-        message.obj = "result";
-        message.sendToTarget();
+        handleListener.resultView();
     }
 
     /**
@@ -159,40 +140,30 @@ public class PreAuthHandler {
         ((App) mainActivity.getApplication()).setTransResult(new TransResult());
         ((App) mainActivity.getApplication()).getTransData().setTransType(TransType.PRE_AUTH_COMPLETE);
         // 刷卡
-        message = mainActivity.getFragmentHandler().obtainMessage(2);
-        message.obj = "swipeCard";
-        message.sendToTarget();
-        mainActivity.getSwipeCardWaitThreat().waitForRslt();
-
+        handleListener.swipeCardView();
         // 判断是IC卡还是磁条卡
         switch (((App) mainActivity.getApplication()).getTransData().getCardType()) {
             case MSCARD:
                 // 选择交易日期
-                message = mainActivity.getFragmentHandler().obtainMessage(8);
-                message.obj = "dateWheel";
-                message.sendToTarget();
-                mainActivity.getDateWheelWaitThreat().waitForRslt();
-
+                handleListener.dateWheelView();
                 // 输入授权号
-                message = mainActivity.getFragmentHandler().obtainMessage(5);
-                message.obj = "authCode";
-                message.sendToTarget();
-                mainActivity.getAuthCodeWaitThreat().waitForRslt();
-
+                handleListener.authCodeView();
                 // 输入金额
-                message = mainActivity.getFragmentHandler().obtainMessage(1);
-                message.obj = "amount";
-                message.sendToTarget();
-                mainActivity.getAmountWaitThreat().waitForRslt();
-
+                handleListener.amountView();
                 // 联机交易
                 TransData transData = ((App) mainActivity.getApplication()).getTransData();
-                IMessage iMessage = mainActivity.getTraner().preAuthComplete(transData.getAccount(),
+                IMessage iMessage = mainActivity.getVirtualPos().createTraner().preAuthComplete(transData.getAccount(),
                         transData.getAmount().toString(), transData.getValidDate(), "901", transData.getSequenceNumber(),
                         transData.getSecondTrackData(), transData.getThirdTrackData(), transData.getPin());
                 ResultHandler.result(mainActivity, iMessage);
                 break;
             case ICCARD:
+                // 开启EMV流程
+                EmvControllerListener transListener = new PreAuthCompleteListener(mainActivity, handleListener);
+                EmvModule emvModule = new EmvModuleImpl();
+                emvModule.initEmvModule(mainActivity);
+                EmvTransController controller = emvModule.getEmvTransController(transListener);
+                controller.startEmv(new BigDecimal("0"), new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             case RFCARD:
@@ -209,9 +180,7 @@ public class PreAuthHandler {
                     ((App) mainActivity.getApplication()).getTransResult().getTransResp());
 
         // 显示结果
-        message = mainActivity.getFragmentHandler().obtainMessage(100);
-        message.obj = "result";
-        message.sendToTarget();
+        handleListener.resultView();
     }
 
     /**
@@ -221,14 +190,10 @@ public class PreAuthHandler {
         ((App) mainActivity.getApplication()).setTransData(new TransData());
         ((App) mainActivity.getApplication()).setTransResult(new TransResult());
         ((App) mainActivity.getApplication()).getTransData().setTransType(TransType.PRE_AUTH_COMPLETE_REVOKE);
-        // TODO 输入主管密码
-
+        // 输入主管密码
+        handleListener.authPasswordView();
         // 输入原凭证号
-        message = mainActivity.getFragmentHandler().obtainMessage(4);
-        message.obj = "proofNo";
-        message.sendToTarget();
-        mainActivity.getProofNoWaitThreat().waitForRslt();
-
+        handleListener.proofNoView();
         // 查询原交易信息
         String unpack = SharedPreferencesUtil.getStringParam(mainActivity,
                 ((App) mainActivity.getApplication()).getTransData().getOldProofNo());
@@ -253,29 +218,28 @@ public class PreAuthHandler {
         ((App) mainActivity.getApplication()).getTransData().setOldTransTime(oldMessage.getFieldString(12));
 
         // 展示原交易信息
-        message = mainActivity.getFragmentHandler().obtainMessage(6);
-        message.obj = "showForm";
-        message.sendToTarget();
-        mainActivity.getShowFormWaitThreat().waitForRslt();
-
+        handleListener.showFormView();
         // 刷卡
-        message = mainActivity.getFragmentHandler().obtainMessage(2);
-        message.obj = "swipeCard";
-        message.sendToTarget();
-        mainActivity.getSwipeCardWaitThreat().waitForRslt();
-
+        handleListener.swipeCardView();
         // 判断是IC卡还是磁条卡
         switch (((App) mainActivity.getApplication()).getTransData().getCardType()) {
             case MSCARD:
                 // 联机交易
                 TransData transData = ((App) mainActivity.getApplication()).getTransData();
-                IMessage iMessage = mainActivity.getTraner().preAuthCompleteRevoke(transData.getAccount(),
+                IMessage iMessage = mainActivity.getVirtualPos().createTraner().preAuthCompleteRevoke(transData.getAccount(),
                         transData.getAmount().toString(), transData.getValidDate(), "901", transData.getSequenceNumber(),
                         transData.getSecondTrackData(), transData.getThirdTrackData(), transData.getPin(), transData.getOldAuthCode(),
                         transData.getOldTraceNo(), transData.getOldTransDate(), transData.getOldTransTime());
                 ResultHandler.result(mainActivity, iMessage);
                 break;
             case ICCARD:
+                // 开启EMV流程
+                EmvControllerListener transListener = new PreAuthCompleteRevokeListener(mainActivity, handleListener);
+                EmvModule emvModule = new EmvModuleImpl();
+                emvModule.initEmvModule(mainActivity);
+                EmvTransController controller = emvModule.getEmvTransController(transListener);
+                BigDecimal amount = ((App) mainActivity.getApplication()).getTransData().getAmount();
+                controller.startEmv(amount.movePointLeft(2), new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             case RFCARD:
@@ -286,9 +250,7 @@ public class PreAuthHandler {
         }
 
         // 展示交易信息
-        message = mainActivity.getFragmentHandler().obtainMessage(100);
-        message.obj = "result";
-        message.sendToTarget();
+        handleListener.resultView();
     }
 
 }
