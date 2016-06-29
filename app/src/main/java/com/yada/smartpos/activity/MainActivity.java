@@ -104,12 +104,12 @@ public class MainActivity extends Activity {
         N900Device k21Device = new N900Device(this);
         k21Device.initController();
         k21Device.connectDevice();
-        initEmv();
+        // initEmv();
 
         packer = new SposPacker(this, HexUtil.parseHex("60001200001306"));
         IEncryption encryption = new EncryptionPos();
         String MAIN_KEY = "8FF97B609D81C5EA4AE715BEB2F9B57D";
-        virtualPos = new VirtualPos("104310157324774", "11010021", packer, "10.2.54.15", 1000, MAIN_KEY,
+        virtualPos = new VirtualPos("104110070110814", "11000897", packer, "10.2.56.70", 1000, MAIN_KEY,
                 50000, encryption, mainActivity);
 
         fragmentManager = getFragmentManager();

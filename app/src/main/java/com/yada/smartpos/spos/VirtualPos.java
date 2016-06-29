@@ -99,8 +99,8 @@ public class VirtualPos implements IVirtualPos<Traner> {
                     terminalAuth, traceNoSeqGenerator, cerNoSeqGenerator, queue);
             ParamInfo paramInfo = traner.paramDownload();
             terminalParam.setBlock01(paramInfo.getBlock01());
-//            terminalParam.setAid(paramInfo.getBlock03Map());
-//            terminalParam.setCAPK(paramInfo.getBlock04_1Map(), paramInfo.getBlock04_2Map());
+            terminalParam.setAid(paramInfo.getBlock03Map());
+            terminalParam.setCAPK(paramInfo.getBlock04_1Map(), paramInfo.getBlock04_2Map());
             traner.close();
             needParamDownload = false;
         }
@@ -136,7 +136,7 @@ public class VirtualPos implements IVirtualPos<Traner> {
      */
     protected void load(MainActivity mainActivity) {
         Set<String> set = SharedPreferencesUtil.getReverseParam(mainActivity);
-        for(String message: set){
+        for (String message : set) {
             try {
                 queue.add(packer.unpack(ByteBuffer.wrap(message.getBytes())));
             } catch (PackagingException e) {

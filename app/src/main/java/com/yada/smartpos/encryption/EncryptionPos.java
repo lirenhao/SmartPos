@@ -25,6 +25,15 @@ public class EncryptionPos implements IEncryption {
      */
     @Override
     public String getLmkTmk(String zmkTmk) {
+        /*
+        kekUsingType：主密钥的灌装方式。常用的灌装方式如：ENCRYPT_TMK - USE ENCRYPT TMK，
+        MAIN_KEY - 使用主密钥加密主密钥，PRIVATE_KEY-主密钥采用发行方私钥加密，TR31_BLOCK - USE TR31 block。
+        mainIndex：待设置主密钥索引，取值范围1-255 。
+        data：待装载的主密钥数据
+        checkValue:主密钥校验值
+        kekIndex:传输密钥索引（该字段只在kekUsingType 为MAIN_KEY 时设置，其他情况下置为-1
+        即可）
+         */
         pinInputModule.loadMainKey(KekUsingType.MAIN_KEY, Const.MKIndexConst.DEFAULT_MK_INDEX,
                 HexUtil.parseHex(zmkTmk), null, 2);
         return null;
@@ -39,6 +48,13 @@ public class EncryptionPos implements IEncryption {
      */
     @Override
     public String getLmkTak(String lmkTmk, String tmkTak) {
+        /*
+        type：工作密钥类型。常用密钥类型：WorkingKeyType.MAC-MAC密钥。
+        mainKeyIndex：已装载的主密钥索引。
+        workingKeyIndex：待设置的工作密钥索引，取值范围1-255。
+        data：待装载的主工作密钥数据。
+        checkValue:校验值
+         */
         pinInputModule.loadWorkingKey(WorkingKeyType.MAC, Const.MKIndexConst.DEFAULT_MK_INDEX,
                 Const.MacWKIndexConst.DEFAULT_MAC_WK_INDEX, HexUtil.parseHex(tmkTak), null);
         return null;
@@ -53,6 +69,13 @@ public class EncryptionPos implements IEncryption {
      */
     @Override
     public String getLmkTpk(String lmkTmk, String tmkTpk) {
+        /*
+        type：工作密钥类型。常用密钥类型：WorkingKeyType.PININPUT-PIN密钥。
+        mainKeyIndex：已装载的主密钥索引。
+        workingKeyIndex：待设置的工作密钥索引，取值范围1-255。
+        data：待装载的主工作密钥数据。
+        checkValue:校验值
+         */
         pinInputModule.loadWorkingKey(WorkingKeyType.PININPUT, Const.MKIndexConst.DEFAULT_MK_INDEX,
                 Const.PinWKIndexConst.DEFAULT_PIN_WK_INDEX, HexUtil.parseHex(tmkTpk), null);
         return null;
