@@ -78,9 +78,7 @@ public class InstallmentRefundListener implements EmvControllerListener {
 
     @Override
     public void onEmvFinished(boolean isSuccess, EmvTransInfo transInfo) throws Exception {
-        if (isSuccess) {
-            ResultHandler.result(mainActivity, respMessage);
-        }
+        ResultHandler.result(mainActivity, respMessage);
         mainActivity.getWaitThreat().notifyThread();
     }
 

@@ -61,19 +61,18 @@ public class InstallmentPayListener implements EmvControllerListener {
         handleListener.emvDataHandle(transInfo);
 
         TransData transData = ((App) mainActivity.getApplication()).getTransData();
-        respMessage = mainActivity.getVirtualPos().createTraner().pay(transData.getAccount(), transData.getAmount().toString(),
+        respMessage = mainActivity.getVirtualPos().createTraner().stagesPay(transData.getAccount(), transData.getAmount().toString(),
                 transData.getValidDate(), "051", transData.getSequenceNumber(),
                 transData.getSecondTrackData(), transData.getThirdTrackData(),
-                transData.getPin(), transData.getIcCardData());
+                transData.getPin(), transData.getIcCardData(),
+                transData.getInstallmentPlanId(), Integer.parseInt(transData.getInstallmentNumber()));
 
         handleListener.emvResultHandle(controller, transInfo, respMessage);
     }
 
     @Override
     public void onEmvFinished(boolean isSuccess, EmvTransInfo transInfo) throws Exception {
-        if (isSuccess) {
-            ResultHandler.result(mainActivity, respMessage);
-        }
+        ResultHandler.result(mainActivity, respMessage);
         mainActivity.getWaitThreat().notifyThread();
     }
 
