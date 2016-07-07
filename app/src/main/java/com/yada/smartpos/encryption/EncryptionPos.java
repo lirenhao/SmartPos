@@ -34,8 +34,9 @@ public class EncryptionPos implements IEncryption {
         kekIndex:传输密钥索引（该字段只在kekUsingType 为MAIN_KEY 时设置，其他情况下置为-1
         即可）
          */
-        pinInputModule.loadMainKey(KekUsingType.MAIN_KEY, Const.MKIndexConst.DEFAULT_MK_INDEX,
-                HexUtil.parseHex(zmkTmk), null, 2);
+        pinInputModule.loadMainKey(KekUsingType.ENCRYPT_TMK, Const.MKIndexConst.DEFAULT_MK_INDEX,
+                HexUtil.parseHex("E5998509E585542884F1B3C0B3CD1053"), HexUtil.parseHex("ACAA3943"), -1);
+
         return null;
     }
 
@@ -55,8 +56,9 @@ public class EncryptionPos implements IEncryption {
         data：待装载的主工作密钥数据。
         checkValue:校验值
          */
-        pinInputModule.loadWorkingKey(WorkingKeyType.MAC, Const.MKIndexConst.DEFAULT_MK_INDEX,
+        byte[] kcv = pinInputModule.loadWorkingKey(WorkingKeyType.MAC, Const.MKIndexConst.DEFAULT_MK_INDEX,
                 Const.MacWKIndexConst.DEFAULT_MAC_WK_INDEX, HexUtil.parseHex(tmkTak), null);
+        String kcvString = HexUtil.toHexString(kcv);
         return null;
     }
 
@@ -76,8 +78,9 @@ public class EncryptionPos implements IEncryption {
         data：待装载的主工作密钥数据。
         checkValue:校验值
          */
-        pinInputModule.loadWorkingKey(WorkingKeyType.PININPUT, Const.MKIndexConst.DEFAULT_MK_INDEX,
+        byte[] kcv = pinInputModule.loadWorkingKey(WorkingKeyType.PININPUT, Const.MKIndexConst.DEFAULT_MK_INDEX,
                 Const.PinWKIndexConst.DEFAULT_PIN_WK_INDEX, HexUtil.parseHex(tmkTpk), null);
+        String kcvString = HexUtil.toHexString(kcv);
         return null;
     }
 
@@ -93,7 +96,7 @@ public class EncryptionPos implements IEncryption {
 
     @Override
     public ByteBuffer getTakMac(ByteBuffer macData, String lmkTak) {
-        MacResult macResult = pinInputModule.calcMac(MacAlgorithm.MAC_X99, KeyManageType.MKSK,
+        MacResult macResult = pinInputModule.calcMac(MacAlgorithm.MAC_X919, KeyManageType.MKSK,
                 new WorkingKey(Const.MacWKIndexConst.DEFAULT_MAC_WK_INDEX), macData.array());
         return ByteBuffer.wrap(macResult.getMac());
     }
