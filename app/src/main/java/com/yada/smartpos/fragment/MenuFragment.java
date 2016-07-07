@@ -10,6 +10,8 @@ import android.view.ViewGroup;
 import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
+import com.newland.mtype.module.common.pin.*;
+import com.payneteasy.tlv.HexUtil;
 import com.yada.sdk.packages.PackagingException;
 import com.yada.smartpos.R;
 import com.yada.smartpos.activity.App;
@@ -18,6 +20,10 @@ import com.yada.smartpos.handler.ConsumeHandler;
 import com.yada.smartpos.handler.InstallmentHandler;
 import com.yada.smartpos.handler.PreAuthHandler;
 import com.yada.smartpos.handler.SignInHandler;
+import com.yada.smartpos.model.TransResult;
+import com.yada.smartpos.module.PinInputModule;
+import com.yada.smartpos.module.impl.PinInputModuleImpl;
+import com.yada.smartpos.util.Const;
 
 import java.io.IOException;
 
@@ -226,11 +232,30 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
                     }
                 }).start();
                 break;
-
+            case 11:
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        PinInputModule pinInputModule = new PinInputModuleImpl();
+                        pinInputModule.loadWorkingKey(WorkingKeyType.MAC, Const.MKIndexConst.DEFAULT_MK_INDEX,
+                                Const.MacWKIndexConst.DEFAULT_MAC_WK_INDEX,
+                                HexUtil.parseHex("56529ED03266EA1D97D63F067870D5AA"),
+                                HexUtil.parseHex("FE536703"));
+                        String macData = "6253371162874883000000000000000001000497105141070701561234566311000897";
+                        MacResult macResult = pinInputModule.calcMac(MacAlgorithm.MAC_X919, KeyManageType.MKSK,
+                                new WorkingKey(Const.MacWKIndexConst.DEFAULT_MAC_WK_INDEX), HexUtil.parseHex(macData));
+                        System.out.println(HexUtil.toHexString(macResult.getMac()));
+                    }
+                }).start();
+                break;
         }
     }
 
     private void exceptionHandler(Exception e) {
+        TransResult transResult = ((App) mainActivity.getApplication()).getTransResult();
+        if(null == transResult){
+            ((App) mainActivity.getApplication()).setTransResult(new TransResult());
+        }
         ((App) mainActivity.getApplication()).getTransResult().setTransCode("0");
         ((App) mainActivity.getApplication()).getTransResult().setTransMsg(e.getMessage());
         Message message = mainActivity.getFragmentHandler().obtainMessage(100);
