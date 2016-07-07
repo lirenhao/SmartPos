@@ -62,6 +62,8 @@ public class Traner extends AbsTraner {
 
         IMessage respMessage = sendTran(reqMessage);
 
+        field56Handle(respMessage);
+
         String temp = new String(respMessage.getField(48).array(), Charset.forName("GBK"));
 
         //返回参数数据继续发送签到交易直到返回密钥为止
@@ -398,7 +400,7 @@ public class Traner extends AbsTraner {
 
     public void field56Handle(IMessage responseMessage) throws IOException, PackagingException {
         if (null != responseMessage.getFieldString(56) && !"".equals(responseMessage.getFieldString(56))) {
-            BerTlvs tlv56 = tlvParser.parse(responseMessage.getField(56).array());
+            BerTlvs tlv56 = tlvParser.parse(HexUtil.parseHex(responseMessage.getFieldString(56)));
 
             BerTlv tlvDF25 = tlv56.find(new BerTag(0xdf, 0x25));
             if (null != tlvDF25) {
@@ -562,26 +564,21 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(42, getMerchantId());
             reqMessage.setFieldString(49, currency);
             if (null != pin && !"".equals(pin)) {
-                reqMessage.setFieldString(52, pin);
+                reqMessage.setFieldString(52, getPin(cardNo, pin));
             }
             if (null != icCardData && !"".equals(icCardData)) {
                 reqMessage.setFieldString(55, icCardData);
             }
             reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());
             StringBuilder macData = new StringBuilder();
-            macData.append(cardNo.length() % 2 == 0 ? cardNo : "0" + cardNo);
-            macData.append(processCode);
-            macData.append(formatAmt);
-            macData.append(traceNo);
-            macData.append("0").append(currency);
+            macData.append(reqMessage.getFieldString(2).length() % 2 == 0 ? reqMessage.getFieldString(2) : "0" + reqMessage.getFieldString(2));
+            macData.append(reqMessage.getFieldString(3));
+            macData.append(reqMessage.getFieldString(4));
+            macData.append(reqMessage.getFieldString(11));
+            macData.append("0").append(reqMessage.getFieldString(49));
+            macData.append(reqMessage.getFieldString(41));
 
-            byte[] bcdMacData = HexUtil.parseHex(macData.toString());
-            byte[] terminalByte = getTerminalId().getBytes();
-
-            ByteBuffer buf = ByteBuffer.allocate(bcdMacData.length + terminalByte.length);
-            buf.put(bcdMacData).put(terminalByte);
-
-            reqMessage.setField(64, getMac(buf));
+            reqMessage.setField(64, getMac(ByteBuffer.wrap(HexUtil.parseHex(macData.toString()))));
 
             respMessage = sendTran(reqMessage);
 
@@ -772,16 +769,23 @@ public class Traner extends AbsTraner {
     /**
      * 分期消费
      *
-     * @param cardNo      卡号
-     * @param validity    效期
-     * @param amt         金额
-     * @param pin         PIN码
+     * @param cardNo          卡号
+     * @param amt             消费金额
+     * @param validity        效期
+     * @param posInputType    POS输入方式901|051
+     * @param sequenceNumber  卡片序列号
+     * @param secondTrackData 二磁道数据
+     * @param thirdTrackData  三磁道数据
+     * @param pin             PIN码
+     * @param icCardData      IC卡数据域
      * @param stagesId    分期交易ID
      * @param stagesCount 分期期数
      * @return
      */
-    public IMessage stagesPay(String cardNo, String validity, String amt, String pin, String stagesId, int stagesCount) {
-        String processCode = "000000";
+    public IMessage stagesPay(String cardNo, String amt, String validity, String posInputType,
+                              String sequenceNumber, String secondTrackData, String thirdTrackData,
+                              String pin, String icCardData, String stagesId, int stagesCount) {
+        String processCode = "000008";
         String formatAmt = String.format("%12s", amt).replace(' ', '0');
         String traceNo = getTraceNo();
         String currency = "156";
@@ -797,9 +801,18 @@ public class Traner extends AbsTraner {
             if (null != validity && !"".equals(validity)) {
                 reqMessage.setFieldString(14, validity);// 卡有效期
             }
-            reqMessage.setFieldString(22, "901");
+            reqMessage.setFieldString(22, posInputType);
+            if (null != sequenceNumber && !"".equals(sequenceNumber)) {
+                reqMessage.setFieldString(23, sequenceNumber);// 卡片序列号
+            }
             reqMessage.setFieldString(24, "009");
             reqMessage.setFieldString(25, "14");
+            if (null != secondTrackData && !"".equals(secondTrackData)) {
+                reqMessage.setFieldString(35, secondTrackData);
+            }
+            if (null != thirdTrackData && !"".equals(thirdTrackData)) {
+                reqMessage.setFieldString(36, thirdTrackData);
+            }
             reqMessage.setFieldString(41, getTerminalId());
             reqMessage.setFieldString(42, getMerchantId());
 

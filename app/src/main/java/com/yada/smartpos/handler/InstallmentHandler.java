@@ -53,8 +53,11 @@ public class InstallmentHandler {
                 handleListener.inputPinView();
                 // 联机交易
                 TransData transData = ((App) mainActivity.getApplication()).getTransData();
-                IMessage iMessage = mainActivity.getVirtualPos().createTraner().stagesPay(transData.getAccount(),
-                        transData.getValidDate(), transData.getAmount().toString(), transData.getPin(),
+                IMessage iMessage = mainActivity.getVirtualPos().createTraner().stagesPay(
+                        transData.getAccount(), transData.getAmount().toString(),
+                        transData.getValidDate(), "901", transData.getSequenceNumber(),
+                        transData.getSecondTrackData(), transData.getThirdTrackData(),
+                        transData.getPin(), transData.getIcCardData(),
                         transData.getInstallmentPlanId(), Integer.parseInt(transData.getInstallmentNumber()));
                 ResultHandler.result(mainActivity, iMessage);
                 break;

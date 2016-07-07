@@ -8,6 +8,7 @@ import com.yada.sdk.packages.PackagingException;
 import com.yada.sdk.packages.transaction.IMessage;
 import com.yada.sdk.packages.transaction.IPacker;
 import com.yada.smartpos.activity.MainActivity;
+import com.yada.smartpos.util.Const;
 import com.yada.smartpos.util.SharedPreferencesUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,7 @@ public class VirtualPos implements IVirtualPos<Traner> {
     private ISequenceGenerator cerNoSeqGenerator;
     // 可阻塞的队列
     private LinkedBlockingQueue<IMessage> queue;
+    private MainActivity mainActivity;
 
     public VirtualPos(String merchantId, String terminalId, IPacker packer,
                       String serverIp, int serverPort, String zmkTmk, int timeout,
@@ -64,6 +66,7 @@ public class VirtualPos implements IVirtualPos<Traner> {
         this.traceNoSeqGenerator = new SequenceGenerator(mainActivity, "traceNo");
         this.cerNoSeqGenerator = new SequenceGenerator(mainActivity, "cerNo");
         this.queue = new LinkedBlockingQueue<IMessage>();
+        this.mainActivity = mainActivity;
         //加载存储的冲正交易
         load(mainActivity);
         //执行工作线程
@@ -91,6 +94,7 @@ public class VirtualPos implements IVirtualPos<Traner> {
             terminalAuth.setTpk(si.tmkTpk);
             traner.close();
             needSignin = false;
+            mainActivity.showMessage("签到完成！", Const.MessageTag.NORMAL);
         }
 
         if (needParamDownload) {
@@ -103,6 +107,7 @@ public class VirtualPos implements IVirtualPos<Traner> {
             terminalParam.setCAPK(paramInfo.getBlock04_1Map(), paramInfo.getBlock04_2Map());
             traner.close();
             needParamDownload = false;
+            mainActivity.showMessage("参数下载完成！", Const.MessageTag.NORMAL);
         }
     }
 
