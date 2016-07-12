@@ -1,5 +1,7 @@
 package com.yada.smartpos.handler;
 
+import com.newland.mtype.common.InnerProcessingCode;
+import com.newland.mtype.common.ProcessingCode;
 import com.newland.mtype.module.common.emv.EmvControllerListener;
 import com.newland.mtype.module.common.emv.EmvTransController;
 import com.newland.pos.sdk.util.BytesUtils;
@@ -42,6 +44,12 @@ public class ConsumeHandler {
         // 启动刷卡
         handleListener.swipeCardView();
         // 判断是IC卡还是磁条卡
+
+        EmvControllerListener transListener = new ConsumePayListener(mainActivity, handleListener);
+        EmvModule emvModule = new EmvModuleImpl();
+        emvModule.initEmvModule(mainActivity);
+        EmvTransController controller = emvModule.getEmvTransController(transListener);
+        BigDecimal amount = ((App) mainActivity.getApplication()).getTransData().getAmount();
         switch (((App) mainActivity.getApplication()).getTransData().getCardType()) {
             case MSCARD:
                 // 磁条卡输入密码
@@ -57,15 +65,13 @@ public class ConsumeHandler {
                 break;
             case ICCARD:
                 // 开启EMV流程
-                EmvControllerListener transListener = new ConsumePayListener(mainActivity, handleListener);
-                EmvModule emvModule = new EmvModuleImpl();
-                emvModule.initEmvModule(mainActivity);
-                EmvTransController controller = emvModule.getEmvTransController(transListener);
-                BigDecimal amount = ((App) mainActivity.getApplication()).getTransData().getAmount();
-                controller.startEmv(amount.movePointLeft(2), new BigDecimal("0"), true);
+                controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.USING_STANDARD_PROCESSINGCODE,
+                        amount.movePointLeft(2), new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             case RFCARD:
+                controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.RF_GOOD_SERVICE,
+                        amount.movePointLeft(2), new BigDecimal("0"),false);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             default:
@@ -140,7 +146,8 @@ public class ConsumeHandler {
                 emvModule.initEmvModule(mainActivity);
                 EmvTransController controller = emvModule.getEmvTransController(transListener);
                 BigDecimal amount = ((App) mainActivity.getApplication()).getTransData().getAmount();
-                controller.startEmv(amount.movePointLeft(2), new BigDecimal("0"), true);
+                controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.USING_STANDARD_PROCESSINGCODE,
+                        amount.movePointLeft(2), new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             case RFCARD:
@@ -195,7 +202,8 @@ public class ConsumeHandler {
                 EmvModule emvModule = new EmvModuleImpl();
                 emvModule.initEmvModule(mainActivity);
                 EmvTransController controller = emvModule.getEmvTransController(transListener);
-                controller.startEmv(new BigDecimal("0"), new BigDecimal("0"), true);
+                controller.startEmv(ProcessingCode.GOODS_AND_SERVICE , InnerProcessingCode.USING_STANDARD_PROCESSINGCODE,
+                        null, null, true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             case RFCARD:

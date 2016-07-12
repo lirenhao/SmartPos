@@ -55,7 +55,7 @@ public class InstallmentFragment extends Fragment implements View.OnClickListene
         costDialog.setSingleChoiceItems(new String[]{"是", "否"}, 0, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                // TODO 是否分期如何设置
+                // TODO 手续费是否分期如何设置
             }
         });
         costDialog.setNegativeButton("取消", new DialogInterface.OnClickListener() {

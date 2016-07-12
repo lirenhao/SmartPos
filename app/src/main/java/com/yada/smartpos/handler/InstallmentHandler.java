@@ -1,5 +1,7 @@
 package com.yada.smartpos.handler;
 
+import com.newland.mtype.common.InnerProcessingCode;
+import com.newland.mtype.common.ProcessingCode;
 import com.newland.mtype.module.common.emv.EmvControllerListener;
 import com.newland.mtype.module.common.emv.EmvTransController;
 import com.newland.pos.sdk.util.BytesUtils;
@@ -68,7 +70,8 @@ public class InstallmentHandler {
                 emvModule.initEmvModule(mainActivity);
                 EmvTransController controller = emvModule.getEmvTransController(transListener);
                 BigDecimal amount = ((App) mainActivity.getApplication()).getTransData().getAmount();
-                controller.startEmv(amount.movePointLeft(2), new BigDecimal("0"), true);
+                controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.USING_STANDARD_PROCESSINGCODE,
+                        amount.movePointLeft(2), new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             case RFCARD:
@@ -142,7 +145,8 @@ public class InstallmentHandler {
                 emvModule.initEmvModule(mainActivity);
                 EmvTransController controller = emvModule.getEmvTransController(transListener);
                 BigDecimal amount = ((App) mainActivity.getApplication()).getTransData().getAmount();
-                controller.startEmv(amount.movePointLeft(2), new BigDecimal("0"), true);
+                controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.USING_STANDARD_PROCESSINGCODE,
+                        amount.movePointLeft(2), new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             case RFCARD:
@@ -192,7 +196,8 @@ public class InstallmentHandler {
                 EmvModule emvModule = new EmvModuleImpl();
                 emvModule.initEmvModule(mainActivity);
                 EmvTransController controller = emvModule.getEmvTransController(transListener);
-                controller.startEmv(new BigDecimal("0"), new BigDecimal("0"), true);
+                controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.USING_STANDARD_PROCESSINGCODE,
+                        new BigDecimal("0"), new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             case RFCARD:

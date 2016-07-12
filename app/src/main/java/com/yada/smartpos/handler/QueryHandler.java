@@ -48,7 +48,7 @@ public class QueryHandler {
                 EmvModule emvModule = new EmvModuleImpl();
                 emvModule.initEmvModule(mainActivity);
                 EmvTransController controller = emvModule.getEmvTransController(transListener);
-                controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.USING_STANDARD_PROCESSINGCODE,
+                controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.TRANS_BALANCE,
                         ((App) mainActivity.getApplication()).getTransData().getAmount().movePointLeft(2),
                         new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();

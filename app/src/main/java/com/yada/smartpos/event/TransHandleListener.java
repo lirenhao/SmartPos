@@ -134,7 +134,9 @@ public class TransHandleListener {
         TLVPackage tlvPackage = transInfo.setExternalInfoPackage(L_55TAGS);
         ((App) mainActivity.getApplication()).getTransData().setAccount(transInfo.getCardNo());
         ((App) mainActivity.getApplication()).getTransData().setAmount(new BigDecimal(transInfo.getAmountAuthorisedNumeric()));
-        ((App) mainActivity.getApplication()).getTransData().setValidDate(transInfo.getCardExpirationDate().substring(0, 4));
+        if(null != transInfo.getCardExpirationDate() && !"".equals(transInfo.getCardExpirationDate())){
+            ((App) mainActivity.getApplication()).getTransData().setValidDate(transInfo.getCardExpirationDate().substring(0, 4));
+        }
         ((App) mainActivity.getApplication()).getTransData().setSequenceNumber(transInfo.getCardSequenceNumber());
         ((App) mainActivity.getApplication()).getTransData().setSecondTrackData(HexUtil.toHexString(transInfo.getTrack_2_eqv_data()).substring(0, 37));
         ((App) mainActivity.getApplication()).getTransData().setIcCardData(HexUtil.toHexString(tlvPackage.pack()));

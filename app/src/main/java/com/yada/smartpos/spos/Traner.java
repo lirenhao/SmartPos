@@ -4,7 +4,9 @@ import com.payneteasy.tlv.*;
 import com.yada.sdk.device.encryption.TerminalAuth;
 import com.yada.sdk.device.pos.AbsTraner;
 import com.yada.sdk.device.pos.ISequenceGenerator;
-import com.yada.sdk.device.pos.posp.params.*;
+import com.yada.sdk.device.pos.posp.params.Block01;
+import com.yada.sdk.device.pos.posp.params.Block02;
+import com.yada.sdk.device.pos.posp.params.Block03;
 import com.yada.sdk.net.FixLenPackageSplitterFactory;
 import com.yada.sdk.packages.PackagingException;
 import com.yada.sdk.packages.transaction.IMessage;
@@ -62,7 +64,7 @@ public class Traner extends AbsTraner {
 
         IMessage respMessage = sendTran(reqMessage);
 
-        field56Handle(respMessage);
+        // TODO field56Handle(respMessage);
 
         String temp = new String(respMessage.getField(48).array(), Charset.forName("GBK"));
 
@@ -133,7 +135,7 @@ public class Traner extends AbsTraner {
 //        paramInfo.setBlock04_1Map(block04_1Map);
 //        paramInfo.setBlock04_2Map(block04_2Map);
 
-        return  paramInfo;
+        return paramInfo;
     }
 
     /**
@@ -486,21 +488,7 @@ public class Traner extends AbsTraner {
                 reqMessage.setFieldString(55, icCardData);
             }
             reqMessage.setFieldString(61, "000008001000009");// 自定义域 交易批次号+操作员号+票据号
-
-            StringBuilder macData = new StringBuilder();
-            macData.append(cardNo.length() % 2 == 0 ? cardNo : "0" + cardNo);
-            macData.append(processCode);
-            macData.append(formatAmt);
-            macData.append(traceNo);
-            macData.append("0").append(currency);
-
-            byte[] bcdMacData = HexUtil.parseHex(macData.toString());
-            byte[] terminalByte = getTerminalId().getBytes();
-
-            ByteBuffer buf = ByteBuffer.allocate(bcdMacData.length + terminalByte.length);
-            buf.put(bcdMacData).put(terminalByte);
-
-            reqMessage.setField(64, getMac(buf));
+            reqMessage.setField(64, getMac(packMacData(cardNo, processCode, formatAmt, traceNo, currency)));
 
             respMessage = sendTran(reqMessage);
 
@@ -570,15 +558,7 @@ public class Traner extends AbsTraner {
                 reqMessage.setFieldString(55, icCardData);
             }
             reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());
-            StringBuilder macData = new StringBuilder();
-            macData.append(reqMessage.getFieldString(2).length() % 2 == 0 ? reqMessage.getFieldString(2) : "0" + reqMessage.getFieldString(2));
-            macData.append(reqMessage.getFieldString(3));
-            macData.append(reqMessage.getFieldString(4));
-            macData.append(reqMessage.getFieldString(11));
-            macData.append("0").append(reqMessage.getFieldString(49));
-            macData.append(reqMessage.getFieldString(41));
-
-            reqMessage.setField(64, getMac(ByteBuffer.wrap(HexUtil.parseHex(macData.toString()))));
+            reqMessage.setField(64, getMac(packMacData(cardNo, processCode, formatAmt, traceNo, currency)));
 
             respMessage = sendTran(reqMessage);
 
@@ -651,21 +631,7 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());// 自定义域 交易批次号+操作员号+票据号
             reqMessage.setFieldString(62, "0200" + oldTraceNo
                     + oldTransDate + oldTransTime);// 自定义域 信息类型码+系统跟踪号+交易日期和时间
-
-            StringBuilder macData = new StringBuilder();
-            macData.append(cardNo.length() % 2 == 0 ? cardNo : "0" + cardNo);
-            macData.append(processCode);
-            macData.append(formatAmt);
-            macData.append(traceNo);
-            macData.append("0").append(currency);
-
-            byte[] bcdMacData = HexUtil.parseHex(macData.toString());
-            byte[] terminalByte = getTerminalId().getBytes();
-
-            ByteBuffer buf = ByteBuffer.allocate(bcdMacData.length + terminalByte.length);
-            buf.put(bcdMacData).put(terminalByte);
-
-            reqMessage.setField(64, getMac(buf));
+            reqMessage.setField(64, getMac(packMacData(cardNo, processCode, formatAmt, traceNo, currency)));
 
             respMessage = sendTran(reqMessage);
 
@@ -736,21 +702,7 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());// 自定义域 交易批次号+操作员号+票据号
             reqMessage.setFieldString(62, "0200" + oldTraceNo
                     + oldTransDate + oldTransTime);// 自定义域 信息类型码+系统跟踪号+交易日期和时间
-
-            StringBuilder macData = new StringBuilder();
-            macData.append(cardNo.length() % 2 == 0 ? cardNo : "0" + cardNo);
-            macData.append(processCode);
-            macData.append(formatAmt);
-            macData.append(traceNo);
-            macData.append("0").append(currency);
-
-            byte[] bcdMacData = HexUtil.parseHex(macData.toString());
-            byte[] terminalByte = getTerminalId().getBytes();
-
-            ByteBuffer buf = ByteBuffer.allocate(bcdMacData.length + terminalByte.length);
-            buf.put(bcdMacData).put(terminalByte);
-
-            reqMessage.setField(64, getMac(buf));
+            reqMessage.setField(64, getMac(packMacData(cardNo, processCode, formatAmt, traceNo, currency)));
 
             respMessage = sendTran(reqMessage);
 
@@ -778,8 +730,8 @@ public class Traner extends AbsTraner {
      * @param thirdTrackData  三磁道数据
      * @param pin             PIN码
      * @param icCardData      IC卡数据域
-     * @param stagesId    分期交易ID
-     * @param stagesCount 分期期数
+     * @param stagesId        分期交易ID
+     * @param stagesCount     分期期数
      * @return
      */
     public IMessage stagesPay(String cardNo, String amt, String validity, String posInputType,
@@ -820,21 +772,11 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(48, field48);
             reqMessage.setFieldString(49, currency);
             reqMessage.setFieldString(52, getPin(cardNo, pin));
+            if (null != icCardData && !"".equals(icCardData)) {
+                reqMessage.setFieldString(55, icCardData);
+            }
             reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());
-            StringBuilder macData = new StringBuilder();
-            macData.append(cardNo.length() % 2 == 0 ? cardNo : "0" + cardNo);
-            macData.append(processCode);
-            macData.append(formatAmt);
-            macData.append(traceNo);
-            macData.append("0").append(currency);
-
-            byte[] bcdMacData = HexUtil.parseHex(macData.toString());
-            byte[] terminalByte = getTerminalId().getBytes();
-
-            ByteBuffer buf = ByteBuffer.allocate(bcdMacData.length + terminalByte.length);
-            buf.put(bcdMacData).put(terminalByte);
-
-            reqMessage.setField(64, getMac(buf));
+            reqMessage.setField(64, getMac(packMacData(cardNo, processCode, formatAmt, traceNo, currency)));
 
             respMessage = sendTran(reqMessage);
 
@@ -916,21 +858,7 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());// 自定义域 交易批次号+操作员号+票据号
             reqMessage.setFieldString(62, "0200" + oldTraceNo
                     + oldTransDate + oldTransTime);// 自定义域 信息类型码+系统跟踪号+交易日期和时间
-
-            StringBuilder macData = new StringBuilder();
-            macData.append(cardNo.length() % 2 == 0 ? cardNo : "0" + cardNo);
-            macData.append(processCode);
-            macData.append(formatAmt);
-            macData.append(traceNo);
-            macData.append("0").append(currency);
-
-            byte[] bcdMacData = HexUtil.parseHex(macData.toString());
-            byte[] terminalByte = getTerminalId().getBytes();
-
-            ByteBuffer buf = ByteBuffer.allocate(bcdMacData.length + terminalByte.length);
-            buf.put(bcdMacData).put(terminalByte);
-
-            reqMessage.setField(64, getMac(buf));
+            reqMessage.setField(64, getMac(packMacData(cardNo, processCode, formatAmt, traceNo, currency)));
 
             respMessage = sendTran(reqMessage);
 
@@ -1007,21 +935,7 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());// 自定义域 交易批次号+操作员号+票据号
             reqMessage.setFieldString(62, "0200" + oldTraceNo
                     + oldTransDate + oldTransTime);// 自定义域 信息类型码+系统跟踪号+交易日期和时间
-
-            StringBuilder macData = new StringBuilder();
-            macData.append(cardNo.length() % 2 == 0 ? cardNo : "0" + cardNo);
-            macData.append(processCode);
-            macData.append(formatAmt);
-            macData.append(traceNo);
-            macData.append("0").append(currency);
-
-            byte[] bcdMacData = HexUtil.parseHex(macData.toString());
-            byte[] terminalByte = getTerminalId().getBytes();
-
-            ByteBuffer buf = ByteBuffer.allocate(bcdMacData.length + terminalByte.length);
-            buf.put(bcdMacData).put(terminalByte);
-
-            reqMessage.setField(64, getMac(buf));
+            reqMessage.setField(64, getMac(packMacData(cardNo, processCode, formatAmt, traceNo, currency)));
 
             respMessage = sendTran(reqMessage);
 
@@ -1092,20 +1006,7 @@ public class Traner extends AbsTraner {
                 reqMessage.setFieldString(55, icCardData);
             }
             reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());
-            StringBuilder macData = new StringBuilder();
-            macData.append(cardNo.length() % 2 == 0 ? cardNo : "0" + cardNo);
-            macData.append(processCode);
-            macData.append(formatAmt);
-            macData.append(traceNo);
-            macData.append("0").append(currency);
-
-            byte[] bcdMacData = HexUtil.parseHex(macData.toString());
-            byte[] terminalByte = getTerminalId().getBytes();
-
-            ByteBuffer buf = ByteBuffer.allocate(bcdMacData.length + terminalByte.length);
-            buf.put(bcdMacData).put(terminalByte);
-
-            reqMessage.setField(64, getMac(buf));
+            reqMessage.setField(64, getMac(packMacData(cardNo, processCode, formatAmt, traceNo, currency)));
 
             respMessage = sendTran(reqMessage);
 
@@ -1176,21 +1077,7 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());// 自定义域 交易批次号+操作员号+票据号
             reqMessage.setFieldString(62, "0200" + oldTraceNo
                     + oldTransDate + oldTransTime);// 自定义域 信息类型码+系统跟踪号+交易日期和时间
-
-            StringBuilder macData = new StringBuilder();
-            macData.append(cardNo.length() % 2 == 0 ? cardNo : "0" + cardNo);
-            macData.append(processCode);
-            macData.append(formatAmt);
-            macData.append(traceNo);
-            macData.append("0").append(currency);
-
-            byte[] bcdMacData = HexUtil.parseHex(macData.toString());
-            byte[] terminalByte = getTerminalId().getBytes();
-
-            ByteBuffer buf = ByteBuffer.allocate(bcdMacData.length + terminalByte.length);
-            buf.put(bcdMacData).put(terminalByte);
-
-            reqMessage.setField(64, getMac(buf));
+            reqMessage.setField(64, getMac(packMacData(cardNo, processCode, formatAmt, traceNo, currency)));
 
             respMessage = sendTran(reqMessage);
 
@@ -1256,20 +1143,7 @@ public class Traner extends AbsTraner {
                 reqMessage.setFieldString(52, pin);
             }
             reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());
-            StringBuilder macData = new StringBuilder();
-            macData.append(cardNo.length() % 2 == 0 ? cardNo : "0" + cardNo);
-            macData.append(processCode);
-            macData.append(formatAmt);
-            macData.append(traceNo);
-            macData.append("0").append(currency);
-
-            byte[] bcdMacData = HexUtil.parseHex(macData.toString());
-            byte[] terminalByte = getTerminalId().getBytes();
-
-            ByteBuffer buf = ByteBuffer.allocate(bcdMacData.length + terminalByte.length);
-            buf.put(bcdMacData).put(terminalByte);
-
-            reqMessage.setField(64, getMac(buf));
+            reqMessage.setField(64, getMac(packMacData(cardNo, processCode, formatAmt, traceNo, currency)));
 
             respMessage = sendTran(reqMessage);
             // 39域返回Z9向IST发送预授权完成通知
@@ -1444,5 +1318,33 @@ public class Traner extends AbsTraner {
         reqMessage.setFieldString(62, orgMessage.getFieldString(0) + orgMessage.getFieldString(11) + "0000000000");
 
         sendTran(reqMessage);
+    }
+
+    /**
+     * 组装算MAC的数据(2、3、4、11、12、13、49、38、39、41)
+     *
+     * @param cardNo      卡号-第2域
+     * @param processCode 处理码-第3域
+     * @param formatAmt   金额-第4域
+     * @param traceNo     流水号-第11域
+     * @param currency    货币-第49域
+     * @return
+     */
+    private ByteBuffer packMacData(String cardNo, String processCode,
+                                   String formatAmt, String traceNo, String currency) {
+        StringBuilder macData = new StringBuilder();
+        macData.append(cardNo.length() % 2 == 0 ? cardNo : "0" + cardNo);
+        macData.append(processCode);
+        macData.append(formatAmt);
+        macData.append(traceNo);
+        macData.append("0").append(currency);
+
+        byte[] bcdMacData = HexUtil.parseHex(macData.toString());
+        byte[] terminalByte = getTerminalId().getBytes();
+
+        ByteBuffer buf = ByteBuffer.allocate(bcdMacData.length + terminalByte.length);
+        buf.put(bcdMacData).put(terminalByte);
+
+        return buf;
     }
 }

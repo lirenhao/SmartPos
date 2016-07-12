@@ -89,7 +89,6 @@ public class SwipeCardFragment extends Fragment {
                                     mainActivity.getSwipeCardWaitThreat().notifyThread();
                                     break;
                                 case RFCARD:
-                                    // TODO 挥卡的未处理
                                     mainActivity.getSwipeCardWaitThreat().notifyThread();
                                     break;
                                 default:
