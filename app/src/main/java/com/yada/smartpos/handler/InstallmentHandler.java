@@ -9,10 +9,7 @@ import com.yada.sdk.packages.PackagingException;
 import com.yada.sdk.packages.transaction.IMessage;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
-import com.yada.smartpos.event.InstallmentPayListener;
-import com.yada.smartpos.event.InstallmentRefundListener;
-import com.yada.smartpos.event.InstallmentRevokeListener;
-import com.yada.smartpos.event.TransHandleListener;
+import com.yada.smartpos.event.*;
 import com.yada.smartpos.model.TransData;
 import com.yada.smartpos.model.TransResult;
 import com.yada.smartpos.module.EmvModule;
@@ -32,9 +29,14 @@ public class InstallmentHandler {
     private MainActivity mainActivity;
     private TransHandleListener handleListener;
 
+    private EmvModule emvModule;
+    private EmvControllerListener transListener;
+    private EmvTransController controller;
+
     public InstallmentHandler(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
         this.handleListener = new TransHandleListener(mainActivity);
+        this.emvModule = new EmvModuleImpl();
     }
 
     public void pay() throws IOException, PackagingException {
@@ -46,6 +48,8 @@ public class InstallmentHandler {
         handleListener.amountView();
         // 启动刷卡
         handleListener.swipeCardView();
+
+        BigDecimal amount = ((App) mainActivity.getApplication()).getTransData().getAmount();
         // 判断是IC卡还是磁条卡
         switch (((App) mainActivity.getApplication()).getTransData().getCardType()) {
             case MSCARD:
@@ -65,16 +69,19 @@ public class InstallmentHandler {
                 break;
             case ICCARD:
                 // 开启EMV流程
-                EmvControllerListener transListener = new InstallmentPayListener(mainActivity, handleListener);
-                EmvModule emvModule = new EmvModuleImpl();
+                transListener = new InstallmentPayListener(mainActivity, handleListener);
                 emvModule.initEmvModule(mainActivity);
-                EmvTransController controller = emvModule.getEmvTransController(transListener);
-                BigDecimal amount = ((App) mainActivity.getApplication()).getTransData().getAmount();
+                controller = emvModule.getEmvTransController(transListener);
                 controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.USING_STANDARD_PROCESSINGCODE,
                         amount.movePointLeft(2), new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             case RFCARD:
+                transListener = new InstallmentPayListener(mainActivity, handleListener);
+                emvModule.initEmvModule(mainActivity);
+                controller = emvModule.getEmvTransController(transListener);
+                controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.USING_STANDARD_PROCESSINGCODE,
+                        amount.movePointLeft(2), new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             default:
@@ -127,6 +134,8 @@ public class InstallmentHandler {
         handleListener.showFormView();
         // 刷卡
         handleListener.swipeCardView();
+
+        BigDecimal amount = ((App) mainActivity.getApplication()).getTransData().getAmount();
         // 判断是IC卡还是磁条卡
         switch (((App) mainActivity.getApplication()).getTransData().getCardType()) {
             case MSCARD:
@@ -140,16 +149,19 @@ public class InstallmentHandler {
                 ResultHandler.result(mainActivity, iMessage);
                 break;
             case ICCARD:
-                EmvControllerListener transListener = new InstallmentRevokeListener(mainActivity, handleListener);
-                EmvModule emvModule = new EmvModuleImpl();
+                transListener = new InstallmentRevokeListener(mainActivity, handleListener);
                 emvModule.initEmvModule(mainActivity);
-                EmvTransController controller = emvModule.getEmvTransController(transListener);
-                BigDecimal amount = ((App) mainActivity.getApplication()).getTransData().getAmount();
+                controller = emvModule.getEmvTransController(transListener);
                 controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.USING_STANDARD_PROCESSINGCODE,
                         amount.movePointLeft(2), new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             case RFCARD:
+                transListener = new InstallmentRevokeListener(mainActivity, handleListener);
+                emvModule.initEmvModule(mainActivity);
+                controller = emvModule.getEmvTransController(transListener);
+                controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.RF_GOOD_SERVICE,
+                        amount.movePointLeft(2), new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             default:
@@ -192,15 +204,19 @@ public class InstallmentHandler {
                 ResultHandler.result(mainActivity, iMessage);
                 break;
             case ICCARD:
-                EmvControllerListener transListener = new InstallmentRefundListener(mainActivity, handleListener);
-                EmvModule emvModule = new EmvModuleImpl();
+                transListener = new InstallmentRefundListener(mainActivity, handleListener);
                 emvModule.initEmvModule(mainActivity);
-                EmvTransController controller = emvModule.getEmvTransController(transListener);
-                controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.USING_STANDARD_PROCESSINGCODE,
-                        new BigDecimal("0"), new BigDecimal("0"), true);
+                controller = emvModule.getEmvTransController(transListener);
+                controller.startEmv(ProcessingCode.RETURNS , InnerProcessingCode.USING_STANDARD_PROCESSINGCODE,
+                        null, null, true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             case RFCARD:
+                transListener = new InstallmentRefundListener(mainActivity, handleListener);
+                emvModule.initEmvModule(mainActivity);
+                controller = emvModule.getEmvTransController(transListener);
+                controller.startEmv(ProcessingCode.RETURNS, InnerProcessingCode.RF_REFUND,
+                        null, null, true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             default:

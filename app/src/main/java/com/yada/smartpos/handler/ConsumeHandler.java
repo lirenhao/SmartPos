@@ -29,9 +29,14 @@ public class ConsumeHandler {
     private MainActivity mainActivity;
     private TransHandleListener handleListener;
 
+    private EmvModule emvModule;
+    private EmvControllerListener transListener;
+    private EmvTransController controller;
+
     public ConsumeHandler(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
         this.handleListener = new TransHandleListener(mainActivity);
+        this.emvModule = new EmvModuleImpl();
     }
 
     public void pay() throws IOException, PackagingException {
@@ -43,13 +48,9 @@ public class ConsumeHandler {
         handleListener.amountView();
         // 启动刷卡
         handleListener.swipeCardView();
-        // 判断是IC卡还是磁条卡
 
         BigDecimal amount = ((App) mainActivity.getApplication()).getTransData().getAmount();
-        EmvModule emvModule = new EmvModuleImpl();
-        EmvControllerListener transListener;
-        EmvTransController controller;
-
+        // 判断是IC卡还是磁条卡
         switch (((App) mainActivity.getApplication()).getTransData().getCardType()) {
             case MSCARD:
                 // 磁条卡输入密码
@@ -132,6 +133,7 @@ public class ConsumeHandler {
         // 刷卡
         handleListener.swipeCardView();
 
+        BigDecimal amount = ((App) mainActivity.getApplication()).getTransData().getAmount();
         // 判断是IC卡还是磁条卡
         switch (((App) mainActivity.getApplication()).getTransData().getCardType()) {
             case MSCARD:
@@ -147,16 +149,19 @@ public class ConsumeHandler {
                 break;
             case ICCARD:
                 // 开启EMV流程
-                EmvControllerListener transListener = new ConsumeRevokeListener(mainActivity, handleListener);
-                EmvModule emvModule = new EmvModuleImpl();
+                transListener = new ConsumeRevokeListener(mainActivity, handleListener);
                 emvModule.initEmvModule(mainActivity);
-                EmvTransController controller = emvModule.getEmvTransController(transListener);
-                BigDecimal amount = ((App) mainActivity.getApplication()).getTransData().getAmount();
+                controller = emvModule.getEmvTransController(transListener);
                 controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.USING_STANDARD_PROCESSINGCODE,
                         amount.movePointLeft(2), new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             case RFCARD:
+                transListener = new ConsumeRevokeListener(mainActivity, handleListener);
+                emvModule.initEmvModule(mainActivity);
+                controller = emvModule.getEmvTransController(transListener);
+                controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.RF_GOOD_SERVICE,
+                        amount.movePointLeft(2), new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             default:
@@ -204,15 +209,19 @@ public class ConsumeHandler {
                 break;
             case ICCARD:
                 // 开启EMV流程
-                EmvControllerListener transListener = new ConsumeRefundListener(mainActivity, handleListener);
-                EmvModule emvModule = new EmvModuleImpl();
+                transListener = new ConsumeRefundListener(mainActivity, handleListener);
                 emvModule.initEmvModule(mainActivity);
-                EmvTransController controller = emvModule.getEmvTransController(transListener);
-                controller.startEmv(ProcessingCode.GOODS_AND_SERVICE , InnerProcessingCode.USING_STANDARD_PROCESSINGCODE,
+                controller = emvModule.getEmvTransController(transListener);
+                controller.startEmv(ProcessingCode.RETURNS , InnerProcessingCode.USING_STANDARD_PROCESSINGCODE,
                         null, null, true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             case RFCARD:
+                transListener = new ConsumeRevokeListener(mainActivity, handleListener);
+                emvModule.initEmvModule(mainActivity);
+                controller = emvModule.getEmvTransController(transListener);
+                controller.startEmv(ProcessingCode.RETURNS, InnerProcessingCode.RF_REFUND,
+                        null, null, true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             default:

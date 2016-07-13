@@ -88,7 +88,7 @@ public class SimpleTransferListener implements EmvTransListener {
             mainActivity.showMessage("交易失败：【交易拒绝】！" + "\r\n", MessageTag.TIP);
         } else if (transInfo.getExecuteRslt() == 0x03) {
             mainActivity.showMessage("联机：【电子现金余额不足，请发起联机交易】！" + "\r\n", MessageTag.TIP);
-            // TODO 联机交易操作
+            // 联机交易操作
         } else if (transInfo.getExecuteRslt() == 0x00 || transInfo.getExecuteRslt() == 0x01) {
             transInfo.getOnLinePin();
             // 交易成功、交易授受

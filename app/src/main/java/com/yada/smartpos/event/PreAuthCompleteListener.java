@@ -59,8 +59,6 @@ public class PreAuthCompleteListener implements EmvLevel2ControllerExtListener {
         handleListener.dateWheelView();
         // 输入授权号
         handleListener.authCodeView();
-        // 输入金额
-        handleListener.amountView();
 
         TransData transData = ((App) mainActivity.getApplication()).getTransData();
         respMessage = mainActivity.getVirtualPos().createTraner().preAuthComplete(

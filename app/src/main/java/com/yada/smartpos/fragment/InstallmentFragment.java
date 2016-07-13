@@ -56,6 +56,8 @@ public class InstallmentFragment extends Fragment implements View.OnClickListene
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 // TODO 手续费是否分期如何设置
+                // 996 灵活分期付款手续费分期交易
+                // 997 灵活分期付款交易
             }
         });
         costDialog.setNegativeButton("取消", new DialogInterface.OnClickListener() {

@@ -29,9 +29,14 @@ public class PreAuthHandler {
     private MainActivity mainActivity;
     private TransHandleListener handleListener;
 
+    private EmvModule emvModule;
+    private EmvControllerListener transListener;
+    private EmvTransController controller;
+
     public PreAuthHandler(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
         this.handleListener = new TransHandleListener(mainActivity);
+        this.emvModule = new EmvModuleImpl();
     }
 
     /**
@@ -45,6 +50,8 @@ public class PreAuthHandler {
         handleListener.amountView();
         // 启动刷卡
         handleListener.swipeCardView();
+
+        BigDecimal amount = ((App) mainActivity.getApplication()).getTransData().getAmount();
         // 判断是IC卡还是磁条卡
         switch (((App) mainActivity.getApplication()).getTransData().getCardType()) {
             case MSCARD:
@@ -61,16 +68,20 @@ public class PreAuthHandler {
                 break;
             case ICCARD:
                 // 开启EMV流程
-                EmvControllerListener transListener = new PreAuthTransListener(mainActivity, handleListener);
-                EmvModule emvModule = new EmvModuleImpl();
+                transListener = new PreAuthTransListener(mainActivity, handleListener);
                 emvModule.initEmvModule(mainActivity);
-                EmvTransController controller = emvModule.getEmvTransController(transListener);
-                BigDecimal amount = ((App) mainActivity.getApplication()).getTransData().getAmount();
+                controller = emvModule.getEmvTransController(transListener);
                 controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.TRANS_PREAUTH,
                         amount.movePointLeft(2), new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             case RFCARD:
+                transListener = new PreAuthTransListener(mainActivity, handleListener);
+                emvModule.initEmvModule(mainActivity);
+                controller = emvModule.getEmvTransController(transListener);
+                // TODO
+                controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.TRANS_PREAUTH,
+                        amount.movePointLeft(2), new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             default:
@@ -114,15 +125,19 @@ public class PreAuthHandler {
                 break;
             case ICCARD:
                 // 开启EMV流程
-                EmvControllerListener transListener = new PreAuthRevokeListener(mainActivity, handleListener);
-                EmvModule emvModule = new EmvModuleImpl();
+                transListener = new PreAuthRevokeListener(mainActivity, handleListener);
                 emvModule.initEmvModule(mainActivity);
-                EmvTransController controller = emvModule.getEmvTransController(transListener);
+                controller = emvModule.getEmvTransController(transListener);
                 controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.TRANS_PREAUTH,
-                        new BigDecimal("0"), new BigDecimal("0"), true);
+                        null, new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             case RFCARD:
+                transListener = new PreAuthRevokeListener(mainActivity, handleListener);
+                emvModule.initEmvModule(mainActivity);
+                controller = emvModule.getEmvTransController(transListener);
+                controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.TRANS_PREAUTH,
+                        null, new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             default:
@@ -162,15 +177,19 @@ public class PreAuthHandler {
                 break;
             case ICCARD:
                 // 开启EMV流程
-                EmvControllerListener transListener = new PreAuthCompleteListener(mainActivity, handleListener);
-                EmvModule emvModule = new EmvModuleImpl();
+                transListener = new PreAuthCompleteListener(mainActivity, handleListener);
                 emvModule.initEmvModule(mainActivity);
-                EmvTransController controller = emvModule.getEmvTransController(transListener);
+                controller = emvModule.getEmvTransController(transListener);
                 controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.TRANS_PREAUTH,
-                        new BigDecimal("0"), new BigDecimal("0"), true);
+                        null, new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             case RFCARD:
+                transListener = new PreAuthCompleteListener(mainActivity, handleListener);
+                emvModule.initEmvModule(mainActivity);
+                controller = emvModule.getEmvTransController(transListener);
+                controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.TRANS_PREAUTH,
+                        null, new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             default:
@@ -225,6 +244,8 @@ public class PreAuthHandler {
         handleListener.showFormView();
         // 刷卡
         handleListener.swipeCardView();
+
+        BigDecimal amount = ((App) mainActivity.getApplication()).getTransData().getAmount();
         // 判断是IC卡还是磁条卡
         switch (((App) mainActivity.getApplication()).getTransData().getCardType()) {
             case MSCARD:
@@ -238,16 +259,19 @@ public class PreAuthHandler {
                 break;
             case ICCARD:
                 // 开启EMV流程
-                EmvControllerListener transListener = new PreAuthCompleteRevokeListener(mainActivity, handleListener);
-                EmvModule emvModule = new EmvModuleImpl();
+                transListener = new PreAuthCompleteRevokeListener(mainActivity, handleListener);
                 emvModule.initEmvModule(mainActivity);
-                EmvTransController controller = emvModule.getEmvTransController(transListener);
-                BigDecimal amount = ((App) mainActivity.getApplication()).getTransData().getAmount();
+                controller = emvModule.getEmvTransController(transListener);
                 controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.TRANS_PREAUTH,
                         amount.movePointLeft(2), new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             case RFCARD:
+                transListener = new PreAuthCompleteRevokeListener(mainActivity, handleListener);
+                emvModule.initEmvModule(mainActivity);
+                controller = emvModule.getEmvTransController(transListener);
+                controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.TRANS_PREAUTH,
+                        amount.movePointLeft(2), new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             default:
