@@ -35,7 +35,7 @@ public class EncryptionPos implements IEncryption {
         即可）
          */
         pinInputModule.loadMainKey(KekUsingType.ENCRYPT_TMK, Const.MKIndexConst.DEFAULT_MK_INDEX,
-                HexUtil.parseHex("E5998509E585542884F1B3C0B3CD1053"), HexUtil.parseHex("ACAA3943"), -1);
+                HexUtil.parseHex(zmkTmk), HexUtil.parseHex("ACAA3943"), -1);
 
         return null;
     }

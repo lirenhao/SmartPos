@@ -215,16 +215,18 @@ public class Traner extends AbsTraner {
 
             IMessage respMessage = sendTran(reqMessage);
 
-            // TODO 判断查询是否成功、返回报文是否有56域
-
-            BerTlvs tlv56 = tlvParser.parse(HexUtil.parseHex(respMessage.getFieldString(56)));
-            // DF26中包含的是应用列表
-            df26s.add(tlv56.find(new BerTag(0xdf, 0x26)).getHexValue());
-            // DF27中包含的是参数下装报文索引号
-            df27value = tlv56.find(new BerTag(0xdf, 0x27)).getHexValue();
-            // 56域中返回的AID参数版本查询结果数据格式为： DF26 DF27
-            // DF26中包含的是应用列表，DF27中包含的是参数下装报文索引号
-            // 如果DF27所对应的值不为0，表示该终端还有应用列表为下装完，需要终端自动继续发出AID应用参数版本查询请求报文，并带上IST返回的DF27
+            if(respMessage.getFieldString(39).equals("00") && null != respMessage.getFieldString(56)){
+                BerTlvs tlv56 = tlvParser.parse(HexUtil.parseHex(respMessage.getFieldString(56)));
+                // DF26中包含的是应用列表
+                df26s.add(tlv56.find(new BerTag(0xdf, 0x26)).getHexValue());
+                // DF27中包含的是参数下装报文索引号
+                df27value = tlv56.find(new BerTag(0xdf, 0x27)).getHexValue();
+                // 56域中返回的AID参数版本查询结果数据格式为： DF26 DF27
+                // DF26中包含的是应用列表，DF27中包含的是参数下装报文索引号
+                // 如果DF27所对应的值不为0，表示该终端还有应用列表为下装完，需要终端自动继续发出AID应用参数版本查询请求报文，并带上IST返回的DF27
+            } else {
+                df27value = "00";
+            }
         } while (!df27value.equals("00"));
 
         Map<String, String> aids = new HashMap<>();

@@ -45,11 +45,11 @@ public class ConsumeHandler {
         handleListener.swipeCardView();
         // 判断是IC卡还是磁条卡
 
-        EmvControllerListener transListener = new ConsumePayListener(mainActivity, handleListener);
-        EmvModule emvModule = new EmvModuleImpl();
-        emvModule.initEmvModule(mainActivity);
-        EmvTransController controller = emvModule.getEmvTransController(transListener);
         BigDecimal amount = ((App) mainActivity.getApplication()).getTransData().getAmount();
+        EmvModule emvModule = new EmvModuleImpl();
+        EmvControllerListener transListener;
+        EmvTransController controller;
+
         switch (((App) mainActivity.getApplication()).getTransData().getCardType()) {
             case MSCARD:
                 // 磁条卡输入密码
@@ -65,13 +65,19 @@ public class ConsumeHandler {
                 break;
             case ICCARD:
                 // 开启EMV流程
+                transListener = new ConsumePayListener(mainActivity, handleListener);
+                emvModule.initEmvModule(mainActivity);
+                controller = emvModule.getEmvTransController(transListener);
                 controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.USING_STANDARD_PROCESSINGCODE,
                         amount.movePointLeft(2), new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             case RFCARD:
+                transListener = new ConsumePayListener(mainActivity, handleListener);
+                emvModule.initEmvModule(mainActivity);
+                controller = emvModule.getEmvTransController(transListener);
                 controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.RF_GOOD_SERVICE,
-                        amount.movePointLeft(2), new BigDecimal("0"),false);
+                        amount.movePointLeft(2), new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             default:

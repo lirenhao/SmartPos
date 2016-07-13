@@ -134,7 +134,7 @@ public class TransHandleListener {
         TLVPackage tlvPackage = transInfo.setExternalInfoPackage(L_55TAGS);
         ((App) mainActivity.getApplication()).getTransData().setAccount(transInfo.getCardNo());
         ((App) mainActivity.getApplication()).getTransData().setAmount(new BigDecimal(transInfo.getAmountAuthorisedNumeric()));
-        if(null != transInfo.getCardExpirationDate() && !"".equals(transInfo.getCardExpirationDate())){
+        if (null != transInfo.getCardExpirationDate() && !"".equals(transInfo.getCardExpirationDate())) {
             ((App) mainActivity.getApplication()).getTransData().setValidDate(transInfo.getCardExpirationDate().substring(0, 4));
         }
         ((App) mainActivity.getApplication()).getTransData().setSequenceNumber(transInfo.getCardSequenceNumber());
@@ -143,23 +143,40 @@ public class TransHandleListener {
     }
 
     public void emvResultHandle(EmvTransController controller, EmvTransInfo transInfo, IMessage respMessage) {
-        if (null != respMessage && "00".equals(respMessage.getFieldString(39))) {
-            SecondIssuanceRequest request = new SecondIssuanceRequest();
-            request.setAuthorisationResponseCode(respMessage.getFieldString(39));// 取自银联8583规范39域值,该参数按交易实际值填充
-            request.setAuthorisationCode(respMessage.getFieldString(38));//取自银联8583规范 38域值,该参数按交易实际值填充
+        if (null != respMessage) {
+            switch(transInfo.getOpenCardType()) {
+                case COMMON_ICCARDREADER:
+                    SecondIssuanceRequest request = new SecondIssuanceRequest();
+                    // 取自银联8583规范39域值,该参数按交易实际值填充
+                    request.setAuthorisationResponseCode(respMessage.getFieldString(39));
+                    //取自银联8583规范 38域值,该参数按交易实际值填充
+                    request.setAuthorisationCode(respMessage.getFieldString(38));
 
-            if (null != respMessage.getFieldString(55)) {
-                TLVPackage tlvPackage = transInfo.setExternalInfoPackage(L_55TAGS);
-                tlvPackage.unpack(HexUtil.parseHex(respMessage.getFieldString(55)));
-                request.setIssuerAuthenticationData(tlvPackage.getValue(0x91));//取自银联8583规范 55域0x91值,该参数按交易实际值填充
-                request.setIssuerScriptTemplate1(tlvPackage.getValue(0x71));//取自银联8583规范 55域0x71值,该参数按交易实际值填充
-                request.setIssuerScriptTemplate2(tlvPackage.getValue(0x72));//取自银联8583规范 55域0x72值,该参数按交易实际值填充
+                    if (null != respMessage.getFieldString(55)) {
+                        TLVPackage tlvPackage = transInfo.setExternalInfoPackage(L_55TAGS);
+                        tlvPackage.unpack(HexUtil.parseHex(respMessage.getFieldString(55)));
+                        //取自银联8583规范 55域0x91值,该参数按交易实际值填充
+                        request.setIssuerAuthenticationData(tlvPackage.getValue(0x91));
+                        //取自银联8583规范 55域0x71值,该参数按交易实际值填充
+                        request.setIssuerScriptTemplate1(tlvPackage.getValue(0x71));
+                        //取自银联8583规范 55域0x72值,该参数按交易实际值填充
+                        request.setIssuerScriptTemplate2(tlvPackage.getValue(0x72));
+                    }
+                    // [步骤2].ic卡联机交易成功或者非接圈存交易，调用二次授权接口，等回调onemvfinished结束流程。
+                    controller.secondIssuance(request);
+                    break;
+                case COMMON_RFCARDREADER:
+                    if("00".equals(respMessage.getFieldString(39))){
+                        controller.doEmvFinish(true);
+                    } else {
+                        controller.doEmvFinish(false);
+                    }
+                    break;
             }
-            // [步骤2].ic卡联机交易成功或者非接圈存交易，调用二次授权接口，等回调onemvfinished结束流程。
-            controller.secondIssuance(request);
         } else {
             // [并列步骤2].联机交易失败或者非接交易(除圈存外)调用emv结束方法，结束流程。
             controller.doEmvFinish(false);
         }
+        // TODO 判断非接交易
     }
 }
