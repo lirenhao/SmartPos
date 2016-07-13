@@ -1,8 +1,9 @@
 package com.yada.smartpos.event;
 
-import com.newland.mtype.module.common.emv.EmvControllerListener;
 import com.newland.mtype.module.common.emv.EmvTransController;
 import com.newland.mtype.module.common.emv.EmvTransInfo;
+import com.newland.mtype.module.common.emv.level2.EmvCardholderCertType;
+import com.newland.mtype.module.common.emv.level2.EmvLevel2ControllerExtListener;
 import com.yada.sdk.packages.transaction.IMessage;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
@@ -14,7 +15,7 @@ import java.math.BigDecimal;
 /**
  * 退货Emv流程控制监听
  */
-public class InstallmentRefundListener implements EmvControllerListener {
+public class InstallmentRefundListener implements EmvLevel2ControllerExtListener {
 
     private TransHandleListener handleListener;
     private MainActivity mainActivity;
@@ -84,7 +85,7 @@ public class InstallmentRefundListener implements EmvControllerListener {
 
     @Override
     public void onFallback(EmvTransInfo emvTransInfo) throws Exception {
-        // TODO 降级处理
+        handleListener.emvFallbackHandle(emvTransInfo);
     }
 
     @Override
@@ -92,5 +93,101 @@ public class InstallmentRefundListener implements EmvControllerListener {
         ((App) mainActivity.getApplication()).getTransResult().setTransCode("0");
         ((App) mainActivity.getApplication()).getTransResult().setTransMsg(e.getMessage());
         mainActivity.getWaitThreat().notifyThread();
+    }
+
+    /**
+     * 是否拦截acctType select事件
+     */
+    @Override
+    public boolean isAccountTypeSelectInterceptor() {
+        return false;
+    }
+
+    /**
+     * 是否拦截持卡人证件确认事件
+     */
+    @Override
+    public boolean isCardHolderCertConfirmInterceptor() {
+        return false;
+    }
+
+    /**
+     * 是否拦截电子现金确认事件
+     */
+    @Override
+    public boolean isEcSwitchInterceptor() {
+        return true;
+    }
+
+    /**
+     * 是否拦截使用外部的序列号处理器
+     */
+    @Override
+    public boolean isTransferSequenceGenerateInterceptor() {
+        return false;
+    }
+
+    /**
+     * 是否拦截消息显示事件
+     */
+    @Override
+    public boolean isLCDMsgInterceptor() {
+        return false;
+    }
+
+    /**
+     * 账号类型选择
+     *
+     * @return －1:失败 1:default 2:savings 3:Cheque/debit 4:Credit
+     */
+    @Override
+    public int accTypeSelect() {
+        return 0;
+    }
+
+    /**
+     * 持卡人证件确认
+     *
+     * @param certType 持卡人证件类型
+     * @param certNo   证件号码
+     * @return true:确认正确，false:确认失败
+     */
+    @Override
+    public boolean cardHolderCertConfirm(EmvCardholderCertType certType, String certNo) {
+        return false;
+    }
+
+    /**
+     * 电子现金/emv选择
+     *
+     * @return 1：继续电子现金交易 0：不进行电子现金交易 －1:用户中止 －3:超时
+     */
+    @Override
+    public int ecSwitch() {
+        return 0;
+    }
+
+    /**
+     * 流水号加1并返回
+     *
+     * @return 下一个流水号
+     */
+    @Override
+    public int incTsc() {
+        return 0;
+    }
+
+    /**
+     * 显示信息
+     *
+     * @param title       标题
+     * @param msg         消息
+     * @param yesNoShowed 是否出现
+     * @param waitingTime 等待时间
+     * @return yesNoShowed=true,返回1表示确认,返回0表示取消yesNoShowed=false,返回值无意义
+     */
+    @Override
+    public int lcdMsg(String title, String msg, boolean yesNoShowed, int waitingTime) {
+        return 0;
     }
 }

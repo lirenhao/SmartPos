@@ -177,6 +177,9 @@ public class TransHandleListener {
             // [并列步骤2].联机交易失败或者非接交易(除圈存外)调用emv结束方法，结束流程。
             controller.doEmvFinish(false);
         }
-        // TODO 判断非接交易
+    }
+
+    public void emvFallbackHandle(EmvTransInfo transInfo) {
+        // TODO 降级处理
     }
 }

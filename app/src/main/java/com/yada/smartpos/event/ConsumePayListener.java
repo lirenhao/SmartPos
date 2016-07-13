@@ -81,7 +81,7 @@ public class ConsumePayListener implements EmvLevel2ControllerExtListener {
 
     @Override
     public void onFallback(EmvTransInfo emvTransInfo) throws Exception {
-        // TODO 降级处理
+        handleListener.emvFallbackHandle(emvTransInfo);
     }
 
     @Override
