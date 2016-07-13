@@ -25,6 +25,7 @@ import com.yada.smartpos.module.impl.CardReaderModuleImpl;
 import com.yada.smartpos.module.impl.IndicatorLightModuleImpl;
 import com.yada.smartpos.module.impl.SwiperModuleImpl;
 import com.yada.smartpos.util.Const;
+import com.yada.smartpos.util.TransType;
 
 import java.util.concurrent.TimeUnit;
 
@@ -54,9 +55,14 @@ public class SwipeCardFragment extends Fragment {
     public void onResume() {
         super.onResume();
         indicatorLight.turnOnLight(new LightType[]{LightType.BLUE_LIGHT});
-        cardReader.openCardReader("请刷卡或者插入IC卡",
-                new ModuleType[]{ModuleType.COMMON_SWIPER, ModuleType.COMMON_ICCARDREADER, ModuleType.COMMON_RFCARDREADER},
-                null, true, true, 60, TimeUnit.SECONDS, new DeviceEventListener<OpenCardReaderEvent>() {
+        ModuleType[] moduleTypes;
+        if (((App) mainActivity.getApplication()).getTransData().getTransType().equals(TransType.EC_CONSUMPTION)) {
+            moduleTypes = new ModuleType[]{ModuleType.COMMON_RFCARDREADER};
+        } else {
+            moduleTypes = new ModuleType[]{ModuleType.COMMON_SWIPER, ModuleType.COMMON_ICCARDREADER};
+        }
+        cardReader.openCardReader("请刷卡或者插入IC卡" ,moduleTypes, null, true, true, 60, TimeUnit.SECONDS,
+                new DeviceEventListener<OpenCardReaderEvent>() {
                     @Override
                     public void onEvent(OpenCardReaderEvent openCardReaderEvent, Handler handler) {
                         if (openCardReaderEvent.isSuccess()) {

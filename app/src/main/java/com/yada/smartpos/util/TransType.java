@@ -14,4 +14,6 @@ public enum TransType {
     INSTALLMENT_PAY,
     INSTALLMENT_REVOKE,
     INSTALLMENT_REFUND,
+
+    EC_CONSUMPTION
 }
