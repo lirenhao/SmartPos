@@ -10,20 +10,12 @@ import android.view.ViewGroup;
 import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
-import com.newland.mtype.module.common.pin.*;
-import com.payneteasy.tlv.HexUtil;
 import com.yada.sdk.packages.PackagingException;
 import com.yada.smartpos.R;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
-import com.yada.smartpos.handler.ConsumeHandler;
-import com.yada.smartpos.handler.InstallmentHandler;
-import com.yada.smartpos.handler.PreAuthHandler;
-import com.yada.smartpos.handler.SignInHandler;
+import com.yada.smartpos.handler.*;
 import com.yada.smartpos.model.TransResult;
-import com.yada.smartpos.module.PinInputModule;
-import com.yada.smartpos.module.impl.PinInputModuleImpl;
-import com.yada.smartpos.util.Const;
 
 import java.io.IOException;
 
@@ -34,12 +26,13 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
     private InstallmentHandler installmentHandler;
     private PreAuthHandler preAuthHandler;
     private SignInHandler signInHandler;
+    private QueryHandler queryHandler;
 
     private String[] arrText = new String[]{
             "消费", "消费撤销", "消费退货",
             "分期消费", "分期撤销", "分期退货",
             "预授权", "预授权撤销", "预授权完成",
-            "预授权完成撤销", "签到", "打印"
+            "预授权完成撤销", "签到", "余额查询"
     };
 
     private int[] arrImages = new int[]{
@@ -55,6 +48,7 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
         installmentHandler = new InstallmentHandler(mainActivity);
         preAuthHandler = new PreAuthHandler(mainActivity);
         signInHandler = new SignInHandler(mainActivity);
+        queryHandler = new QueryHandler(mainActivity);
     }
 
     @Override
@@ -224,7 +218,7 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
                     @Override
                     public void run() {
                         try {
-                            signInHandler.paramDownload();
+                            signInHandler.signIn();
                         } catch (IOException | PackagingException e) {
                             e.printStackTrace();
                             exceptionHandler(e);
@@ -236,15 +230,12 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        PinInputModule pinInputModule = new PinInputModuleImpl();
-                        pinInputModule.loadWorkingKey(WorkingKeyType.MAC, Const.MKIndexConst.DEFAULT_MK_INDEX,
-                                Const.MacWKIndexConst.DEFAULT_MAC_WK_INDEX,
-                                HexUtil.parseHex("56529ED03266EA1D97D63F067870D5AA"),
-                                HexUtil.parseHex("FE536703"));
-                        String macData = "6253371162874883000000000000000001000497105141070701561234566311000897";
-                        MacResult macResult = pinInputModule.calcMac(MacAlgorithm.MAC_X919, KeyManageType.MKSK,
-                                new WorkingKey(Const.MacWKIndexConst.DEFAULT_MAC_WK_INDEX), HexUtil.parseHex(macData));
-                        System.out.println(HexUtil.toHexString(macResult.getMac()));
+                        try {
+                            queryHandler.query();
+                        } catch (IOException | PackagingException e) {
+                            e.printStackTrace();
+                            exceptionHandler(e);
+                        }
                     }
                 }).start();
                 break;
@@ -253,36 +244,15 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
 
     private void exceptionHandler(Exception e) {
         TransResult transResult = ((App) mainActivity.getApplication()).getTransResult();
-        if(null == transResult){
+        if (null == transResult) {
             ((App) mainActivity.getApplication()).setTransResult(new TransResult());
         }
-        ((App) mainActivity.getApplication()).getTransResult().setTransCode("0");
-        ((App) mainActivity.getApplication()).getTransResult().setTransMsg(e.getMessage());
+        StringBuffer result = new StringBuffer();
+        result.append("交易异常\n").append(e.getMessage());
+        ((App) mainActivity.getApplication()).getTransResult().setResultText(result.toString());
+
         Message message = mainActivity.getFragmentHandler().obtainMessage(100);
         message.obj = "fail";
         message.sendToTarget();
     }
-
-    /**
-     private void clientTest() {
-     new Thread(new Runnable() {
-    @Override public void run() {
-    TcpClient client = null;
-    try {
-    String pack = "6000120000130602007020058020c09009190456351010089268584731000000000000000000168309010012143704563510100892685847d4912520100008690038333938313030303130343131303038333938313030300156771ecbb5b635a94d0015303930353131303031303030303832483edbc6335f2119";
-    ByteBuffer reqBuffer = ByteBuffer.wrap(BytesUtils.hexStringToBytes(pack));
-    client = new TcpClient(new InetSocketAddress("10.2.56.70", 1000),
-    new FixLenPackageSplitterFactory(2, false), 20000);
-    client.open();
-    ByteBuffer respBuffer = client.send(reqBuffer);
-    System.out.println(BytesUtils.bytesToHex(respBuffer.array()));
-    } catch (IOException e) {
-    e.printStackTrace();
-    } finally {
-    client.close();
-    }
-    }
-    }).start();
-     }
-     **/
 }

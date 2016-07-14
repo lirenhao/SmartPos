@@ -13,7 +13,6 @@ import com.newland.mtype.module.common.printer.FontSettingScope;
 import com.newland.mtype.module.common.printer.FontType;
 import com.newland.mtype.module.common.printer.LiteralType;
 import com.newland.mtype.module.common.printer.WordStockType;
-import com.yada.sdk.packages.transaction.IMessage;
 import com.yada.smartpos.R;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
@@ -21,12 +20,10 @@ import com.yada.smartpos.model.TransResult;
 import com.yada.smartpos.module.PrinterModule;
 import com.yada.smartpos.module.impl.PrinterModuleImpl;
 
-import java.math.BigDecimal;
-
 public class OrderFragment extends Fragment implements View.OnClickListener {
 
     private MainActivity mainActivity;
-    private StringBuffer order;
+    private String orderString;
 
     public OrderFragment(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
@@ -41,34 +38,27 @@ public class OrderFragment extends Fragment implements View.OnClickListener {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_order, container, false);
         TextView orderView = (TextView) view.findViewById(R.id.order);
-        order = new StringBuffer();
         TransResult transResult = ((App) mainActivity.getApplication()).getTransResult();
         if (null == transResult) {
             orderView.setGravity(Gravity.CENTER);
-            order.append("交易失败\n交易结果为空");
+            orderView.setText("交易失败\n交易结果为空");
         } else {
             if ("1".equals(transResult.getTransCode())) {
-                IMessage messageResp = transResult.getMessageResp();
-                order.append("\n\n").append("           ").
-                        append("签购单").append("\n\n").
-                        append("商户名称：TEST\n").
-                        append("商户编号：").append(messageResp.getFieldString(42)).append("\n").
-                        append("终端编号：").append(messageResp.getFieldString(41)).append("\n").
-                        append("操作员号：001\n").
-                        append("卡号：").append(messageResp.getFieldString(2)).append("\n").
-                        append("凭证号：").append(messageResp.getFieldString(11)).append("\n").
-                        append("授权码：").append(messageResp.getFieldString(38)).append("\n").
-                        append("参考号：").append(messageResp.getFieldString(37)).append("\n").
-                        append("日期时间：").append(messageResp.getFieldString(13)).append(messageResp.getFieldString(12)).append("\n").
-                        append("金额：").append(new BigDecimal(messageResp.getFieldString(4)).movePointLeft(2).toString()).append("\n").
-                        append("--------------------------------\n").append("\n\n\n\n\n");
-                //doPrinter();
+                switch (((App) mainActivity.getApplication()).getTransData().getTransType()) {
+                    case QUERY:
+                        orderView.setGravity(Gravity.CENTER);
+                        orderView.setText(transResult.getResultText());
+                        break;
+                    default:
+                        orderView.setText(transResult.getResultText());
+                        orderString = transResult.getResultText();
+                        // doPrinter();
+                }
             } else {
                 orderView.setGravity(Gravity.CENTER);
-                order.append("交易失败\n").append(transResult.getTransMsg());
+                orderView.setText(transResult.getResultText());
             }
         }
-        orderView.setText(order.toString());
         Button finish = (Button) view.findViewById(R.id.finish);
         finish.setOnClickListener(this);
 
@@ -98,7 +88,7 @@ public class OrderFragment extends Fragment implements View.OnClickListener {
                 //步骤1： 打印机初始化该方法必须在打印前调用一次
                 printer.init();
                 //步骤2：开始打印，参数分别为打印信息，超时时间，超时时间单位
-                printer.printString(order.toString());
+                printer.printString(orderString);
             }
         }).start();
     }

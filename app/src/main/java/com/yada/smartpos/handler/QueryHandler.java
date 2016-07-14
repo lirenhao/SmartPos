@@ -11,8 +11,10 @@ import com.yada.smartpos.activity.MainActivity;
 import com.yada.smartpos.event.QueryTransListener;
 import com.yada.smartpos.event.TransHandleListener;
 import com.yada.smartpos.model.TransData;
+import com.yada.smartpos.model.TransResult;
 import com.yada.smartpos.module.EmvModule;
 import com.yada.smartpos.module.impl.EmvModuleImpl;
+import com.yada.smartpos.util.TransType;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -28,6 +30,10 @@ public class QueryHandler {
     }
 
     public void query() throws IOException, PackagingException {
+        ((App) mainActivity.getApplication()).setTransData(new TransData());
+        ((App) mainActivity.getApplication()).setTransResult(new TransResult());
+        ((App) mainActivity.getApplication()).getTransData().setTransType(TransType.QUERY);
+
         // 刷卡
         handleListener.swipeCardView();
         // 判断是IC卡还是磁条卡
@@ -37,8 +43,7 @@ public class QueryHandler {
                 handleListener.inputPinView();
                 // 联机交易
                 TransData transData = ((App) mainActivity.getApplication()).getTransData();
-                IMessage iMessage = mainActivity.getVirtualPos().createTraner().query(
-                        transData.getAccount(), transData.getAmount().toString(),
+                IMessage iMessage = mainActivity.getVirtualPos().createTraner().query(transData.getAccount(),
                         transData.getValidDate(), "901", transData.getSequenceNumber(), transData.getSecondTrackData(),
                         transData.getThirdTrackData(), transData.getPin(), transData.getIcCardData());
                 ResultHandler.result(mainActivity, iMessage);
@@ -49,8 +54,7 @@ public class QueryHandler {
                 emvModule.initEmvModule(mainActivity);
                 EmvTransController controller = emvModule.getEmvTransController(transListener);
                 controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.TRANS_BALANCE,
-                        ((App) mainActivity.getApplication()).getTransData().getAmount().movePointLeft(2),
-                        new BigDecimal("0"), true);
+                        null, new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;
             case RFCARD:

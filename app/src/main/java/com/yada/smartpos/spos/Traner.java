@@ -440,7 +440,6 @@ public class Traner extends AbsTraner {
      * 余额查询
      *
      * @param cardNo          卡号
-     * @param amt             金额
      * @param validity        效期
      * @param posInputType    POS输入方式901|051
      * @param sequenceNumber  卡片序列号
@@ -450,10 +449,9 @@ public class Traner extends AbsTraner {
      * @param icCardData      IC卡数据域
      * @return 返回交易响应的message
      */
-    public IMessage query(String cardNo, String amt, String validity, String posInputType, String sequenceNumber,
+    public IMessage query(String cardNo, String validity, String posInputType, String sequenceNumber,
                           String secondTrackData, String thirdTrackData, String pin, String icCardData) {
         String processCode = "310008";
-        String formatAmt = String.format("%12s", amt).replace(' ', '0');
         String traceNo = getTraceNo();
         String currency = "156";
         IMessage respMessage = null;
@@ -463,7 +461,6 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(0, "0200");
             reqMessage.setFieldString(2, cardNo);// 主帐号
             reqMessage.setFieldString(3, processCode);// 处理码
-            reqMessage.setFieldString(4, formatAmt);// 交易金额
             reqMessage.setFieldString(11, traceNo);// 系统跟踪号
             if (null != validity && !"".equals(validity)) {
                 reqMessage.setFieldString(14, validity);// 卡有效期
@@ -489,9 +486,10 @@ public class Traner extends AbsTraner {
             if (null != icCardData && !"".equals(icCardData)) {
                 reqMessage.setFieldString(55, icCardData);
             }
-            reqMessage.setFieldString(61, "000008001000009");// 自定义域 交易批次号+操作员号+票据号
-            reqMessage.setField(64, getMac(packMacData(cardNo, processCode, formatAmt, traceNo, null, null, currency, null, null)));
+            reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());// 自定义域 交易批次号+操作员号+票据号
+            reqMessage.setField(64, getMac(packMacData(cardNo, processCode, null, traceNo, null, null, currency, null, null)));
 
+            // TODO 返回的报文没有金额域(4域)
             respMessage = sendTran(reqMessage);
 
             //检查是否需要签到或参数下载
@@ -1341,13 +1339,13 @@ public class Traner extends AbsTraner {
     private ByteBuffer packMacData(String cardNo, String processCode, String formatAmt, String traceNo,
                                    String transTime, String transDate, String currency, String authCode, String respCode) {
         StringBuilder macData = new StringBuilder();
-        macData.append(cardNo.length() % 2 == 0 ? cardNo : "0" + cardNo);
-        macData.append(processCode);
-        macData.append(formatAmt);
-        macData.append(traceNo);
+        if (null != cardNo) macData.append(cardNo.length() % 2 == 0 ? cardNo : "0" + cardNo);
+        if (null != processCode) macData.append(processCode);
+        if (null != formatAmt) macData.append(formatAmt);
+        if (null != traceNo) macData.append(traceNo);
         if (null != transTime) macData.append(transTime);
         if (null != transDate) macData.append(transDate);
-        macData.append("0").append(currency);
+        if (null != currency) macData.append("0").append(currency);
 
         byte[] bcdMacData = HexUtil.parseHex(macData.toString());
         byte[] terminalByte = getTerminalId().getBytes();

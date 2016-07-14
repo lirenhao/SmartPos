@@ -60,7 +60,7 @@ public class QueryTransListener implements EmvLevel2ControllerExtListener {
         handleListener.emvDataHandle(transInfo);
 
         TransData transData = ((App) mainActivity.getApplication()).getTransData();
-        respMessage = mainActivity.getVirtualPos().createTraner().pay(transData.getAccount(), transData.getAmount().toString(),
+        respMessage = mainActivity.getVirtualPos().createTraner().query(transData.getAccount(),
                 transData.getValidDate(), "051", transData.getSequenceNumber(),
                 transData.getSecondTrackData(), transData.getThirdTrackData(),
                 transData.getPin(), transData.getIcCardData());

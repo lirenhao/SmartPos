@@ -8,6 +8,7 @@ public class TransResult {
     private String transMsg;
     private String transResp;
     private IMessage messageResp;
+    private String resultText;
 
     public String getTransCode() {
         return transCode;
@@ -41,4 +42,11 @@ public class TransResult {
         this.messageResp = messageResp;
     }
 
+    public String getResultText() {
+        return resultText;
+    }
+
+    public void setResultText(String resultText) {
+        this.resultText = resultText;
+    }
 }

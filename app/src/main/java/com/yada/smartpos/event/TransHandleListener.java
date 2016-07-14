@@ -6,9 +6,11 @@ import com.newland.mtype.module.common.emv.EmvTransInfo;
 import com.newland.mtype.module.common.emv.SecondIssuanceRequest;
 import com.newland.mtype.tlv.TLVPackage;
 import com.payneteasy.tlv.HexUtil;
+import com.yada.sdk.device.pos.posp.params.Block01;
 import com.yada.sdk.packages.transaction.IMessage;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
+import com.yada.smartpos.model.TransResult;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -125,6 +127,57 @@ public class TransHandleListener {
     }
 
     public void resultView() {
+        TransResult transResult = ((App) mainActivity.getApplication()).getTransResult();
+        StringBuilder result = new StringBuilder();
+        if (null == transResult) {
+            result.append("交易失败\n交易结果为空");
+        } else {
+            if ("1".equals(transResult.getTransCode())) {
+                Block01 paramBlock01 = ((App) mainActivity.getApplication()).getParamBlock01();
+                IMessage messageResp = transResult.getMessageResp();
+                switch (((App) mainActivity.getApplication()).getTransData().getTransType()){
+                    case QUERY:
+                        String field54 = messageResp.getFieldString(54);
+                        BigDecimal ledgerBalance = new BigDecimal(0);
+                        BigDecimal availableBalance = new BigDecimal(0);
+                        String tag, value;
+                        int index = 0;
+                        while (index < field54.length()) {
+                            tag = field54.substring(index + 2, index + 4);
+                            value = field54.substring(index + 2 + 2 + 4, index + 2 + 2  + 4 + 12);
+                            index = index + 20;
+                            if (tag.equals("01")) {
+                                ledgerBalance = new BigDecimal(value);
+                            }
+                            if (tag.equals("02")) {
+                                availableBalance = new BigDecimal(value);
+                            }
+                        }
+                        result.append("余额查询\n\n").
+                                append("账户余额：").append(ledgerBalance.movePointLeft(2).toString()).append("\n").
+                                append("可用余额：").append(availableBalance.movePointLeft(2).toString());
+                        break;
+                    default:
+                        result.append("\n\n").append("           ").
+                                append("签购单").append("\n\n").
+                                append("商户名称：").append(paramBlock01.cnMerName).append("\n").
+                                append("商户编号：").append(messageResp.getFieldString(42)).append("\n").
+                                append("终端编号：").append(messageResp.getFieldString(41)).append("\n").
+                                append("操作员号：001\n").
+                                append("交易类型：").append(((App) mainActivity.getApplication()).getTransData().getTransType().transType).append("\n").
+                                append("卡号：").append(messageResp.getFieldString(2)).append("\n").
+                                append("凭证号：").append(messageResp.getFieldString(11)).append("\n").
+                                append("授权码：").append(messageResp.getFieldString(38)).append("\n").
+                                append("参考号：").append(messageResp.getFieldString(37)).append("\n").
+                                append("日期时间：").append(messageResp.getFieldString(13)).append(messageResp.getFieldString(12)).append("\n").
+                                append("金额：").append(new BigDecimal(messageResp.getFieldString(4)).movePointLeft(2).toString()).append("\n").
+                                append("--------------------------------\n").append("\n\n\n\n\n");
+                }
+            } else {
+                result.append("交易失败\n").append(transResult.getTransMsg());
+            }
+        }
+        ((App) mainActivity.getApplication()).getTransResult().setResultText(result.toString());
         Message message = mainActivity.getFragmentHandler().obtainMessage(100);
         message.obj = "result";
         message.sendToTarget();
@@ -144,7 +197,7 @@ public class TransHandleListener {
 
     public void emvResultHandle(EmvTransController controller, EmvTransInfo transInfo, IMessage respMessage) {
         if (null != respMessage) {
-            switch(transInfo.getOpenCardType()) {
+            switch (transInfo.getOpenCardType()) {
                 case COMMON_ICCARDREADER:
                     SecondIssuanceRequest request = new SecondIssuanceRequest();
                     // 取自银联8583规范39域值,该参数按交易实际值填充
@@ -166,7 +219,7 @@ public class TransHandleListener {
                     controller.secondIssuance(request);
                     break;
                 case COMMON_RFCARDREADER:
-                    if("00".equals(respMessage.getFieldString(39))){
+                    if ("00".equals(respMessage.getFieldString(39))) {
                         controller.doEmvFinish(true);
                     } else {
                         controller.doEmvFinish(false);
