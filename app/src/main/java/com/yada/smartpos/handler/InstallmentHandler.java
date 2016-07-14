@@ -60,11 +60,10 @@ public class InstallmentHandler {
                 // 联机交易
                 TransData transData = ((App) mainActivity.getApplication()).getTransData();
                 IMessage iMessage = mainActivity.getVirtualPos().createTraner().stagesPay(
-                        transData.getAccount(), transData.getAmount().toString(),
-                        transData.getValidDate(), "901", transData.getSequenceNumber(),
-                        transData.getSecondTrackData(), transData.getThirdTrackData(),
-                        transData.getPin(), transData.getIcCardData(),
-                        transData.getInstallmentPlanId(), Integer.parseInt(transData.getInstallmentNumber()));
+                        transData.getAccount(), transData.getAmount().toString(), transData.getValidDate(), "051",
+                        transData.getSequenceNumber(), transData.getSecondTrackData(), transData.getThirdTrackData(),
+                        transData.getPin(), transData.getIcCardData(), transData.getInstallmentPlanId(),
+                        Integer.parseInt(transData.getInstallmentNumber()), transData.getInstallmentType());
                 ResultHandler.result(mainActivity, iMessage);
                 break;
             case ICCARD:
@@ -207,7 +206,7 @@ public class InstallmentHandler {
                 transListener = new InstallmentRefundListener(mainActivity, handleListener);
                 emvModule.initEmvModule(mainActivity);
                 controller = emvModule.getEmvTransController(transListener);
-                controller.startEmv(ProcessingCode.RETURNS , InnerProcessingCode.USING_STANDARD_PROCESSINGCODE,
+                controller.startEmv(ProcessingCode.RETURNS, InnerProcessingCode.USING_STANDARD_PROCESSINGCODE,
                         null, null, true);
                 mainActivity.getWaitThreat().waitForRslt();
                 break;

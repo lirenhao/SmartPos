@@ -732,11 +732,12 @@ public class Traner extends AbsTraner {
      * @param icCardData      IC卡数据域
      * @param stagesId        分期交易ID
      * @param stagesCount     分期期数
+     * @param stagesType      分期类型
      * @return
      */
-    public IMessage stagesPay(String cardNo, String amt, String validity, String posInputType,
-                              String sequenceNumber, String secondTrackData, String thirdTrackData,
-                              String pin, String icCardData, String stagesId, int stagesCount) {
+    public IMessage stagesPay(String cardNo, String amt, String validity, String posInputType, String sequenceNumber,
+                              String secondTrackData, String thirdTrackData, String pin, String icCardData,
+                              String stagesId, int stagesCount, String stagesType) {
         String processCode = "000008";
         String formatAmt = String.format("%12s", amt).replace(' ', '0');
         String traceNo = getTraceNo();
@@ -768,7 +769,7 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(41, getTerminalId());
             reqMessage.setFieldString(42, getMerchantId());
 
-            String field48 = "9003905" + "9106" + stagesId + String.format("%02d", stagesCount);
+            String field48 = "9003" + stagesType + "9106" + stagesId + String.format("%02d", stagesCount);
             reqMessage.setFieldString(48, field48);
             reqMessage.setFieldString(49, currency);
             reqMessage.setFieldString(52, getPin(cardNo, pin));

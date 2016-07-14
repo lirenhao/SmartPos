@@ -79,7 +79,7 @@ public class PreAuthHandler {
                 transListener = new PreAuthTransListener(mainActivity, handleListener);
                 emvModule.initEmvModule(mainActivity);
                 controller = emvModule.getEmvTransController(transListener);
-                // TODO
+                // TODO 非接的用那种内部交易类型
                 controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.TRANS_PREAUTH,
                         amount.movePointLeft(2), new BigDecimal("0"), true);
                 mainActivity.getWaitThreat().waitForRslt();

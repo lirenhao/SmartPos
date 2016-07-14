@@ -25,6 +25,7 @@ public class TransData {
     private String referenceNumber;// 参考号
     private String installmentNumber;// 分期期数
     private String installmentPlanId;// 分期计划ID
+    private String installmentType;// 分期类型
 
     public TransType getTransType() {
         return transType;
@@ -168,5 +169,13 @@ public class TransData {
 
     public void setInstallmentPlanId(String installmentPlanId) {
         this.installmentPlanId = installmentPlanId;
+    }
+
+    public String getInstallmentType() {
+        return installmentType;
+    }
+
+    public void setInstallmentType(String installmentType) {
+        this.installmentType = installmentType;
     }
 }

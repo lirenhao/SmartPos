@@ -52,12 +52,15 @@ public class InstallmentFragment extends Fragment implements View.OnClickListene
 
         costDialog = new AlertDialog.Builder(mainActivity);
         costDialog.setTitle("手续费是否分期");
-        costDialog.setSingleChoiceItems(new String[]{"是", "否"}, 0, new DialogInterface.OnClickListener() {
+        ((App) mainActivity.getApplication()).getTransData().setInstallmentType("905");
+        costDialog.setSingleChoiceItems(new String[]{"否", "是"}, 0, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                // TODO 手续费是否分期如何设置
-                // 996 灵活分期付款手续费分期交易
-                // 997 灵活分期付款交易
+                if (which == 0) {
+                    ((App) mainActivity.getApplication()).getTransData().setInstallmentType("905");
+                } else {
+                    ((App) mainActivity.getApplication()).getTransData().setInstallmentType("955");
+                }
             }
         });
         costDialog.setNegativeButton("取消", new DialogInterface.OnClickListener() {

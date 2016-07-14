@@ -62,11 +62,11 @@ public class InstallmentPayListener implements EmvLevel2ControllerExtListener {
         handleListener.emvDataHandle(transInfo);
 
         TransData transData = ((App) mainActivity.getApplication()).getTransData();
-        respMessage = mainActivity.getVirtualPos().createTraner().stagesPay(transData.getAccount(), transData.getAmount().toString(),
-                transData.getValidDate(), "051", transData.getSequenceNumber(),
-                transData.getSecondTrackData(), transData.getThirdTrackData(),
-                transData.getPin(), transData.getIcCardData(),
-                transData.getInstallmentPlanId(), Integer.parseInt(transData.getInstallmentNumber()));
+        respMessage = mainActivity.getVirtualPos().createTraner().stagesPay(
+                transData.getAccount(), transData.getAmount().toString(), transData.getValidDate(), "051",
+                transData.getSequenceNumber(), transData.getSecondTrackData(), transData.getThirdTrackData(),
+                transData.getPin(), transData.getIcCardData(), transData.getInstallmentPlanId(),
+                Integer.parseInt(transData.getInstallmentNumber()), transData.getInstallmentType());
 
         handleListener.emvResultHandle(controller, transInfo, respMessage);
     }
