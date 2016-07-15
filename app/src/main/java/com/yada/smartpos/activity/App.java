@@ -5,8 +5,28 @@ import com.yada.sdk.device.pos.posp.params.Block01;
 import com.yada.sdk.device.pos.posp.params.Block02;
 import com.yada.smartpos.model.TransData;
 import com.yada.smartpos.model.TransResult;
+import org.xutils.DbManager;
+import org.xutils.x;
 
 public class App extends Application {
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        x.Ext.init(this);
+        DbManager.DaoConfig daoConfig = new DbManager.DaoConfig()
+                .setDbName("SmartPos.db")
+                .setDbOpenListener(new DbManager.DbOpenListener() {
+                    @Override
+                    public void onDbOpened(DbManager db) {
+                        // 开启WAL, 对写入加速提升巨大
+                        db.getDatabase().enableWriteAheadLogging();
+                    }
+                });
+        dbManager = x.getDb(daoConfig);
+    }
+
+    private DbManager dbManager;
 
     private Block01 paramBlock01;
 
@@ -15,6 +35,10 @@ public class App extends Application {
     private TransData transData;
 
     private TransResult transResult;
+
+    public DbManager getDbManager() {
+        return dbManager;
+    }
 
     public Block01 getParamBlock01() {
         return paramBlock01;

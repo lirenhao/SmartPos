@@ -40,8 +40,8 @@ public class ShowFormFragment extends Fragment implements View.OnClickListener {
         TextView transAuthCode = (TextView) view.findViewById(R.id.transAuthCode);
         transAuthCode.setText(((App)mainActivity.getApplication()).getTransData().getOldAuthCode());
 
-        TextView transReferenceNumber = (TextView) view.findViewById(R.id.transReferenceNumber);
-        transReferenceNumber.setText(((App)mainActivity.getApplication()).getTransData().getOldTraceNo());
+        TextView transTraceNo = (TextView) view.findViewById(R.id.traceNo);
+        transTraceNo.setText(((App)mainActivity.getApplication()).getTransData().getOldTraceNo());
 
         TextView transDateTime = (TextView) view.findViewById(R.id.transDateTime);
         transDateTime.setText(((App)mainActivity.getApplication()).getTransData().getOldTransDate()+

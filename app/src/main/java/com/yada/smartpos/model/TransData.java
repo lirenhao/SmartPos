@@ -19,10 +19,9 @@ public class TransData {
     private String icCardData;// IC卡交易数据域
     private String oldProofNo;// 原凭证号
     private String oldAuthCode;// 原消费交易授权号
-    private String oldTraceNo;// 原系统跟踪号
+    private String oldTraceNo;// 原系统跟踪号\参考号
     private String oldTransDate;// 原交易日期
     private String oldTransTime;// 原交易日期
-    private String referenceNumber;// 参考号
     private String installmentNumber;// 分期期数
     private String installmentPlanId;// 分期计划ID
     private String installmentType;// 分期类型
@@ -145,14 +144,6 @@ public class TransData {
 
     public void setOldTransTime(String oldTransTime) {
         this.oldTransTime = oldTransTime;
-    }
-
-    public String getReferenceNumber() {
-        return referenceNumber;
-    }
-
-    public void setReferenceNumber(String referenceNumber) {
-        this.referenceNumber = referenceNumber;
     }
 
     public String getInstallmentNumber() {

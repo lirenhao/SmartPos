@@ -15,7 +15,11 @@ import com.yada.smartpos.R;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
 import com.yada.smartpos.handler.*;
+import com.yada.smartpos.model.TransLog;
 import com.yada.smartpos.model.TransResult;
+import com.yada.smartpos.util.Const;
+import org.xutils.DbManager;
+import org.xutils.ex.DbException;
 
 import java.io.IOException;
 
@@ -32,14 +36,16 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
             "消费", "消费撤销", "消费退货",
             "分期消费", "分期撤销", "分期退货",
             "预授权", "预授权撤销", "预授权完成",
-            "预授权完成撤销", "签到", "余额查询"
+            "预授权完成撤销", "签到", "余额查询",
+            "DB添加", "DB查询"
     };
 
     private int[] arrImages = new int[]{
             R.drawable.main_icon_1, R.drawable.main_icon_2, R.drawable.main_icon_3,
             R.drawable.main_icon_4, R.drawable.main_icon_5, R.drawable.main_icon_6,
             R.drawable.main_icon_7, R.drawable.main_icon_8, R.drawable.main_icon_9,
-            R.drawable.main_icon_10, R.drawable.main_icon_11, R.drawable.main_icon_12
+            R.drawable.main_icon_10, R.drawable.main_icon_11, R.drawable.main_icon_12,
+            R.drawable.main_icon_11, R.drawable.main_icon_12
     };
 
     public MenuFragment(MainActivity mainActivity) {
@@ -239,6 +245,36 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
                     }
                 }).start();
                 break;
+            case 12:
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        DbManager dbManager = ((App)mainActivity.getApplicationContext()).getDbManager();
+                        TransLog transLog = new TransLog();
+                        transLog.setTraceNo("0001");
+                        try {
+                            dbManager.save(transLog);
+                            mainActivity.showMessage("保存成功！", Const.MessageTag.NORMAL);
+                        } catch (DbException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }).start();
+                break;
+            case 13:
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        DbManager dbManager = ((App)mainActivity.getApplicationContext()).getDbManager();
+                        try {
+                            TransLog transLog = dbManager.findById(TransLog.class, "0001");
+                            mainActivity.showMessage(transLog.toString(), Const.MessageTag.NORMAL);
+                        } catch (DbException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }).start();
+                break;
         }
     }
 
@@ -247,7 +283,7 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
         if (null == transResult) {
             ((App) mainActivity.getApplication()).setTransResult(new TransResult());
         }
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         result.append("交易异常\n").append(e.getMessage());
         ((App) mainActivity.getApplication()).getTransResult().setResultText(result.toString());
 

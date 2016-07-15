@@ -10,7 +10,11 @@ import com.yada.sdk.device.pos.posp.params.Block01;
 import com.yada.sdk.packages.transaction.IMessage;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
+import com.yada.smartpos.db.service.TransLogService;
+import com.yada.smartpos.model.TransData;
+import com.yada.smartpos.model.TransLog;
 import com.yada.smartpos.model.TransResult;
+import org.xutils.ex.DbException;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -135,7 +139,7 @@ public class TransHandleListener {
             if ("1".equals(transResult.getTransCode())) {
                 Block01 paramBlock01 = ((App) mainActivity.getApplication()).getParamBlock01();
                 IMessage messageResp = transResult.getMessageResp();
-                switch (((App) mainActivity.getApplication()).getTransData().getTransType()){
+                switch (((App) mainActivity.getApplication()).getTransData().getTransType()) {
                     case QUERY:
                         String field54 = messageResp.getFieldString(54);
                         BigDecimal ledgerBalance = new BigDecimal(0);
@@ -144,7 +148,7 @@ public class TransHandleListener {
                         int index = 0;
                         while (index < field54.length()) {
                             tag = field54.substring(index + 2, index + 4);
-                            value = field54.substring(index + 2 + 2 + 4, index + 2 + 2  + 4 + 12);
+                            value = field54.substring(index + 2 + 2 + 4, index + 2 + 2 + 4 + 12);
                             index = index + 20;
                             if (tag.equals("01")) {
                                 ledgerBalance = new BigDecimal(value);
@@ -234,5 +238,56 @@ public class TransHandleListener {
 
     public void emvFallbackHandle(EmvTransInfo transInfo) {
         // TODO 降级处理
+    }
+
+    public void saveTransHandle() throws DbException {
+        TransData transData = ((App) mainActivity.getApplication()).getTransData();
+        TransResult transResult = ((App) mainActivity.getApplication()).getTransResult();
+        if (transResult != null && "1".equals(transResult.getTransCode()) && transResult.getMessageResp() != null) {
+            IMessage message = transResult.getMessageResp();
+
+            TransLog transLog = new TransLog();
+            transLog.setTraceNo(message.getFieldString(11));
+            transLog.setTransType(transData.getTransType().toString());
+            transLog.setCardType(transData.getCardType().toString());
+            transLog.setAccount(message.getFieldString(2));
+            transLog.setAuthCode(message.getFieldString(38));
+            transLog.setTransTime(message.getFieldString(12));
+            transLog.setTransDate(message.getFieldString(13));
+            transLog.setAmount(message.getFieldString(4));
+
+            TransLogService service = new TransLogService(((App) mainActivity.getApplication()).getDbManager());
+            service.save(transLog);
+        }
+    }
+
+    public void deleteTransHandle() throws DbException {
+        TransResult transResult = ((App) mainActivity.getApplication()).getTransResult();
+        if (transResult != null && "1".equals(transResult.getTransCode()) && transResult.getMessageResp() != null) {
+            TransLogService service = new TransLogService(((App) mainActivity.getApplication()).getDbManager());
+            service.deleteById(((App) mainActivity.getApplication()).getTransData().getOldProofNo());
+        }
+    }
+
+    public boolean selectTransHandle() throws DbException {
+        TransLogService service = new TransLogService(((App) mainActivity.getApplication()).getDbManager());
+        TransLog transLog = service.findById(((App) mainActivity.getApplication()).getTransData().getOldProofNo());
+        if (null != transLog) {
+            // 原交易卡号
+            ((App) mainActivity.getApplication()).getTransData().setAccount(transLog.getAccount());
+            // 原交易金额
+            ((App) mainActivity.getApplication()).getTransData().setAmount(new BigDecimal(transLog.getAmount()));
+            // 原交易授权码
+            ((App) mainActivity.getApplication()).getTransData().setOldAuthCode(transLog.getAuthCode());
+            // 原系统跟踪号
+            ((App) mainActivity.getApplication()).getTransData().setOldTraceNo(transLog.getTraceNo());
+            // 原交易日期
+            ((App) mainActivity.getApplication()).getTransData().setOldTransDate(transLog.getTransDate());
+            // 原交易时间
+            ((App) mainActivity.getApplication()).getTransData().setOldTransTime(transLog.getTransTime());
+            return true;
+        } else {
+            return false;
+        }
     }
 }

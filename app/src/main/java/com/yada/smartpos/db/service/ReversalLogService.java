@@ -1,0 +1,28 @@
+package com.yada.smartpos.db.service;
+
+import com.yada.smartpos.model.ReversalLog;
+import org.xutils.DbManager;
+import org.xutils.ex.DbException;
+
+import java.util.List;
+
+public class ReversalLogService {
+
+    private DbManager dbManager;
+
+    public ReversalLogService(DbManager dbManager) {
+        this.dbManager = dbManager;
+    }
+
+    public void save(ReversalLog reversalLog) throws DbException {
+        dbManager.save(reversalLog);
+    }
+
+    public void deleteById(int id) throws DbException {
+        dbManager.deleteById(ReversalLog.class, id);
+    }
+
+    public List<ReversalLog> find() throws DbException {
+        return dbManager.findAll(ReversalLog.class);
+    }
+}
