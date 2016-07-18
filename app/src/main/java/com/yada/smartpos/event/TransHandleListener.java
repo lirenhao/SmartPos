@@ -255,6 +255,7 @@ public class TransHandleListener {
             transLog.setTransTime(message.getFieldString(12));
             transLog.setTransDate(message.getFieldString(13));
             transLog.setAmount(message.getFieldString(4));
+            transLog.setBatchNo(message.getFieldString(61).substring(0, 6));
 
             TransLogService service = new TransLogService(((App) mainActivity.getApplication()).getDbManager());
             service.save(transLog);

@@ -22,6 +22,10 @@ public class ReversalLogService {
         dbManager.deleteById(ReversalLog.class, id);
     }
 
+    public void delete() throws DbException {
+        dbManager.delete(ReversalLog.class);
+    }
+
     public List<ReversalLog> find() throws DbException {
         return dbManager.findAll(ReversalLog.class);
     }

@@ -1,5 +1,6 @@
 package com.yada.smartpos.spos;
 
+import com.payneteasy.tlv.HexUtil;
 import com.yada.sdk.device.encryption.IEncryption;
 import com.yada.sdk.device.encryption.TerminalAuth;
 import com.yada.sdk.device.pos.ISequenceGenerator;
@@ -7,15 +8,18 @@ import com.yada.sdk.device.pos.IVirtualPos;
 import com.yada.sdk.packages.PackagingException;
 import com.yada.sdk.packages.transaction.IMessage;
 import com.yada.sdk.packages.transaction.IPacker;
+import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
+import com.yada.smartpos.db.service.ReversalLogService;
+import com.yada.smartpos.model.ReversalLog;
 import com.yada.smartpos.util.Const;
-import com.yada.smartpos.util.SharedPreferencesUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xutils.ex.DbException;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Set;
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class VirtualPos implements IVirtualPos<Traner> {
@@ -140,15 +144,15 @@ public class VirtualPos implements IVirtualPos<Traner> {
      * 读取硬盘上的持久化文件，并将内容放入到queue后，删除该文件
      */
     protected void load(MainActivity mainActivity) {
-        Set<String> set = SharedPreferencesUtil.getReverseParam(mainActivity);
-        for (String message : set) {
-            try {
-                queue.add(packer.unpack(ByteBuffer.wrap(message.getBytes())));
-            } catch (PackagingException e) {
-                e.printStackTrace();
+        ReversalLogService service = new ReversalLogService(((App) mainActivity.getApplication()).getDbManager());
+        try {
+            List<ReversalLog> reversalLogs = service.find();
+            for (ReversalLog reversalLog : reversalLogs) {
+                queue.add(packer.unpack(ByteBuffer.wrap(HexUtil.parseHex(reversalLog.getMessage()))));
             }
+        } catch (DbException | PackagingException e) {
+            e.printStackTrace();
         }
-        // TODO 持久化文件
     }
 
     /**
@@ -166,7 +170,7 @@ public class VirtualPos implements IVirtualPos<Traner> {
                 } catch (InterruptedException e) {
                     // 程序停止时，回出现该异常。
                 } catch (RuntimeException e) {
-                    // TODO LOG 保证工作线程不会因为意外原因退出。
+                    // LOG 保证工作线程不会因为意外原因退出。
                 }
             }
         }

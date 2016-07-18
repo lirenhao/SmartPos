@@ -4,6 +4,8 @@ import com.yada.smartpos.model.TransLog;
 import org.xutils.DbManager;
 import org.xutils.ex.DbException;
 
+import java.util.List;
+
 public class TransLogService {
 
     private DbManager dbManager;
@@ -22,5 +24,9 @@ public class TransLogService {
 
     public TransLog findById(String traceNo) throws DbException {
         return dbManager.findById(TransLog.class, traceNo);
+    }
+
+    public List<TransLog> findByBatchNo(String batchNo) throws DbException {
+        return dbManager.selector(TransLog.class).and("batchNo", "=", batchNo).findAll();
     }
 }

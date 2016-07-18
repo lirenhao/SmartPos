@@ -38,6 +38,10 @@ public class TransLog {
     @Column(name = "amount")
     private String amount;
 
+    // 批次号
+    @Column(name = "batchNo")
+    private String batchNo;
+
     public String getTraceNo() {
         return traceNo;
     }
@@ -100,5 +104,13 @@ public class TransLog {
 
     public void setAmount(String amount) {
         this.amount = amount;
+    }
+
+    public String getBatchNo() {
+        return batchNo;
+    }
+
+    public void setBatchNo(String batchNo) {
+        this.batchNo = batchNo;
     }
 }
