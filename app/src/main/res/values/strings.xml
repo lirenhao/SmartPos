@@ -2,7 +2,7 @@
     <string name="app_name">智能POS</string>
     <string name="header_text">中国银行</string>
     <string name="header_pay">消费</string>
-    <string name="pin_supervisor">请输入主管密码</string>
+    <string name="auth_password">请输入主管密码</string>
     <string name="money_input">请输入金额</string>
     <string name="pin_input">请持卡人输入密码</string>
     <string name="proofNo_input">请输入原凭证号</string>

@@ -26,15 +26,35 @@ public class App extends Application {
         dbManager = x.getDb(daoConfig);
     }
 
+    /**
+     * SQLite数据库管理
+     */
     private DbManager dbManager;
 
+    /**
+     * POS第一块参数
+     */
     private Block01 paramBlock01;
 
+    /**
+     * POS第二块参数
+     */
     private Block02 paramBlock02;
 
+    /**
+     * 交易所需的数据
+     */
     private TransData transData;
 
+    /**
+     * 交易结果处理需要的数据
+     */
     private TransResult transResult;
+
+    /**
+     * EMV流程是否降级标识，false-不降级、true-降级
+     */
+    private boolean fallback = false;
 
     public DbManager getDbManager() {
         return dbManager;
@@ -70,5 +90,13 @@ public class App extends Application {
 
     public void setTransResult(TransResult transResult) {
         this.transResult = transResult;
+    }
+
+    public boolean isFallback() {
+        return fallback;
+    }
+
+    public void setFallback(boolean fallback) {
+        this.fallback = fallback;
     }
 }

@@ -489,7 +489,6 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());// 自定义域 交易批次号+操作员号+票据号
             reqMessage.setField(64, getMac(packMacData(cardNo, processCode, null, traceNo, null, null, currency, null, null)));
 
-            // TODO 返回的报文没有金额域(4域)
             respMessage = sendTran(reqMessage);
 
             //检查是否需要签到或参数下载
@@ -1273,6 +1272,91 @@ public class Traner extends AbsTraner {
             respMessage = sendTran(reqMessage);
 
             // TODO 通知未返回的处理，存储等待下笔交易上送
+            field56Handle(respMessage);
+        } catch (PackagingException e) {
+            LOGGER.debug("when stagesPay happen PackagingException", e);
+        } catch (IOException e) {
+            LOGGER.debug("when stagesPay happen IOException", e);
+        }
+        return respMessage;
+    }
+
+    /**
+     * 普惠查询
+     * @param cardNo 卡号
+     * @param amt 原始金额
+     * @return
+     */
+    public IMessage specialQuery(String cardNo, String amt){
+        String processCode = "830008";
+        String formatAmt = String.format("%12s", amt).replace(' ', '0');
+        String traceNo = getTraceNo();
+        String currency = "156";
+        IMessage respMessage = null;
+        try {
+            IMessage reqMessage = createMessage();
+            reqMessage.setFieldString(0, "0200");
+            reqMessage.setFieldString(2, cardNo);
+            reqMessage.setFieldString(3, processCode);
+            reqMessage.setFieldString(4, formatAmt);
+            reqMessage.setFieldString(11, traceNo);
+            reqMessage.setFieldString(22, "012");
+            reqMessage.setFieldString(24, "009");
+            reqMessage.setFieldString(25, "14");
+            reqMessage.setFieldString(41, getTerminalId());
+            reqMessage.setFieldString(42, getMerchantId());
+            reqMessage.setFieldString(48, "75002A4");
+            reqMessage.setFieldString(49, currency);
+            reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());
+            reqMessage.setField(64, getMac(packMacData(cardNo, processCode, formatAmt, traceNo, null, null, currency, null, null)));
+
+            respMessage = sendTran(reqMessage);
+
+            //检查是否需要签到或参数下载
+            cs.checkMessage(respMessage);
+            field56Handle(respMessage);
+        } catch (PackagingException e) {
+            LOGGER.debug("when stagesPay happen PackagingException", e);
+        } catch (IOException e) {
+            LOGGER.debug("when stagesPay happen IOException", e);
+        }
+        return respMessage;
+    }
+
+    /**
+     * 普惠消费
+     * @param cardNo 卡号
+     * @param amt 原始金额
+     * @return
+     */
+    public IMessage specialPay(String cardNo, String amt){
+        String processCode = "840008";
+        String formatAmt = String.format("%12s", amt).replace(' ', '0');
+        String traceNo = getTraceNo();
+        String currency = "156";
+        IMessage respMessage = null;
+        IMessage reqMessage;
+        try {
+            reqMessage = createMessage();
+            reqMessage.setFieldString(0, "0200");
+            reqMessage.setFieldString(2, cardNo);
+            reqMessage.setFieldString(3, processCode);
+            reqMessage.setFieldString(4, formatAmt);
+            reqMessage.setFieldString(11, traceNo);
+            reqMessage.setFieldString(22, "012");
+            reqMessage.setFieldString(24, "009");
+            reqMessage.setFieldString(25, "14");
+            reqMessage.setFieldString(41, getTerminalId());
+            reqMessage.setFieldString(42, getMerchantId());
+            reqMessage.setFieldString(48, "75002A4");
+            reqMessage.setFieldString(49, currency);
+            reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());
+            reqMessage.setField(64, getMac(packMacData(cardNo, processCode, formatAmt, traceNo, null, null, currency, null, null)));
+
+            respMessage = sendTran(reqMessage);
+
+            //检查是否需要签到或参数下载
+            cs.checkMessage(respMessage);
             field56Handle(respMessage);
         } catch (PackagingException e) {
             LOGGER.debug("when stagesPay happen PackagingException", e);

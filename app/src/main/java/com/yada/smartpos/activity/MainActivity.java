@@ -110,7 +110,7 @@ public class MainActivity extends Activity {
         IPacker packer = new SposPacker(this, HexUtil.parseHex("60001200001306"));
         IEncryption encryption = new EncryptionPos();
         String zmkTmk = "E5998509E585542884F1B3C0B3CD1053";
-        virtualPos = new VirtualPos("104110070110814", "11000897", packer, "10.2.54.15", 1000, zmkTmk,
+        virtualPos = new VirtualPos("104110070110814", "11000897", packer, "10.2.54.14", 1000, zmkTmk,
                 50000, encryption, mainActivity);
 
         // 初始化界面调度

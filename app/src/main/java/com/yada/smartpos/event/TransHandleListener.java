@@ -14,6 +14,7 @@ import com.yada.smartpos.db.service.TransLogService;
 import com.yada.smartpos.model.TransData;
 import com.yada.smartpos.model.TransLog;
 import com.yada.smartpos.model.TransResult;
+import com.yada.smartpos.util.Const;
 import org.xutils.ex.DbException;
 
 import java.math.BigDecimal;
@@ -241,7 +242,10 @@ public class TransHandleListener {
     }
 
     public void emvFallbackHandle(EmvTransInfo transInfo) {
-        // TODO 降级处理
+        // 降级处理
+        ((App) mainActivity.getApplication()).setFallback(true);
+        mainActivity.getWaitThreat().notifyThread();
+        mainActivity.showMessage("请拔出卡进行刷卡！" + "\r\n", Const.MessageTag.NORMAL);
     }
 
     public void saveTransHandle() throws DbException {

@@ -15,11 +15,7 @@ import com.yada.smartpos.R;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
 import com.yada.smartpos.handler.*;
-import com.yada.smartpos.model.TransLog;
 import com.yada.smartpos.model.TransResult;
-import com.yada.smartpos.util.Const;
-import org.xutils.DbManager;
-import org.xutils.ex.DbException;
 
 import java.io.IOException;
 
@@ -31,6 +27,7 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
     private PreAuthHandler preAuthHandler;
     private SignInHandler signInHandler;
     private QueryHandler queryHandler;
+    private SpecialHandler specialHandler;
 
     private String[] arrText = new String[]{
             "消费", "消费撤销", "消费退货",
@@ -55,6 +52,7 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
         preAuthHandler = new PreAuthHandler(mainActivity);
         signInHandler = new SignInHandler(mainActivity);
         queryHandler = new QueryHandler(mainActivity);
+        specialHandler = new SpecialHandler(mainActivity);
     }
 
     @Override
@@ -65,6 +63,7 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
         manager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
         ((App) mainActivity.getApplication()).setTransData(null);
         ((App) mainActivity.getApplication()).setTransResult(null);
+        ((App) mainActivity.getApplication()).setFallback(false);
     }
 
     @Override
@@ -249,14 +248,11 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        DbManager dbManager = ((App)mainActivity.getApplicationContext()).getDbManager();
-                        TransLog transLog = new TransLog();
-                        transLog.setTraceNo("0001");
                         try {
-                            dbManager.save(transLog);
-                            mainActivity.showMessage("保存成功！", Const.MessageTag.NORMAL);
-                        } catch (DbException e) {
+                            specialHandler.specialPay();
+                        } catch (IOException | PackagingException e) {
                             e.printStackTrace();
+                            exceptionHandler(e);
                         }
                     }
                 }).start();
@@ -265,13 +261,7 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        DbManager dbManager = ((App)mainActivity.getApplicationContext()).getDbManager();
-                        try {
-                            TransLog transLog = dbManager.findById(TransLog.class, "0001");
-                            mainActivity.showMessage(transLog.toString(), Const.MessageTag.NORMAL);
-                        } catch (DbException e) {
-                            e.printStackTrace();
-                        }
+
                     }
                 }).start();
                 break;

@@ -81,7 +81,7 @@ public class AuthPasswordFragment extends Fragment implements View.OnClickListen
         ivEnter.setOnClickListener(this);
 
         TextView inputMsg = (TextView) view.findViewById(R.id.input_tip_msg);
-        inputMsg.setText(R.string.pin_supervisor);
+        inputMsg.setText(R.string.auth_password);
         inputTxt = (TextView) view.findViewById(R.id.input_pin_txt);
 
         return view;

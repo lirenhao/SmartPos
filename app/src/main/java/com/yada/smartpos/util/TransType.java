@@ -15,6 +15,9 @@ public enum TransType {
     INSTALLMENT_REVOKE("分期撤销"),
     INSTALLMENT_REFUND("分期退货"),
 
+    SPECIAL_QUERY("普惠查询"),
+    SPECIAL_PAY("普惠消费"),
+
     EC_CONSUMPTION("电子现金消费"),
     QUERY("余额查询");
 
