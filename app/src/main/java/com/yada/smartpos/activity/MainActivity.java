@@ -30,6 +30,7 @@ public class MainActivity extends Activity {
     private WaitThreat waitThreat;
     private VirtualPos virtualPos;
 
+    private WaitThreat authPasswordWaitThreat = new WaitThreat();
     private WaitThreat amountWaitThreat = new WaitThreat();
     private WaitThreat swipeCardWaitThreat = new WaitThreat();
     private WaitThreat inputPinWaitThreat = new WaitThreat();
@@ -46,6 +47,10 @@ public class MainActivity extends Activity {
 
     public WaitThreat getWaitThreat() {
         return waitThreat;
+    }
+
+    public WaitThreat getAuthPasswordWaitThreat() {
+        return authPasswordWaitThreat;
     }
 
     public WaitThreat getAmountWaitThreat() {
@@ -153,6 +158,10 @@ public class MainActivity extends Activity {
                         break;
                     case 9:
                         tx.add(R.id.main, new TimeWheelFragment(mainActivity), msg.obj.toString())
+                                .addToBackStack(null).commitAllowingStateLoss();
+                        break;
+                    case 10:
+                        tx.add(R.id.main, new AuthPasswordFragment(mainActivity), msg.obj.toString())
                                 .addToBackStack(null).commitAllowingStateLoss();
                         break;
                     case 100:

@@ -37,7 +37,7 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
             "分期消费", "分期撤销", "分期退货",
             "预授权", "预授权撤销", "预授权完成",
             "预授权完成撤销", "签到", "余额查询",
-            "DB添加", "DB查询"
+            "优惠商户", "结账"
     };
 
     private int[] arrImages = new int[]{
@@ -45,7 +45,7 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
             R.drawable.main_icon_4, R.drawable.main_icon_5, R.drawable.main_icon_6,
             R.drawable.main_icon_7, R.drawable.main_icon_8, R.drawable.main_icon_9,
             R.drawable.main_icon_10, R.drawable.main_icon_11, R.drawable.main_icon_12,
-            R.drawable.main_icon_11, R.drawable.main_icon_12
+            R.drawable.main_icon_13, R.drawable.main_icon_14
     };
 
     public MenuFragment(MainActivity mainActivity) {

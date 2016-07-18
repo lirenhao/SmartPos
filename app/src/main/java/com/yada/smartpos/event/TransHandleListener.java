@@ -85,7 +85,11 @@ public class TransHandleListener {
     }
 
     public void authPasswordView() {
-        // TODO 输入主管密码
+        // 输入主管密码
+        Message message = mainActivity.getFragmentHandler().obtainMessage(10);
+        message.obj = "authPassword";
+        message.sendToTarget();
+        mainActivity.getAuthPasswordWaitThreat().waitForRslt();
     }
 
     public void proofNoView() {
