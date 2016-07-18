@@ -4,6 +4,7 @@ import com.yada.smartpos.model.ReversalLog;
 import org.xutils.DbManager;
 import org.xutils.ex.DbException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ReversalLogService {
@@ -27,6 +28,9 @@ public class ReversalLogService {
     }
 
     public List<ReversalLog> find() throws DbException {
-        return dbManager.findAll(ReversalLog.class);
+        List<ReversalLog> reversalLogs = dbManager.findAll(ReversalLog.class);
+        if (null == reversalLogs)
+            reversalLogs = new ArrayList<>();
+        return reversalLogs;
     }
 }

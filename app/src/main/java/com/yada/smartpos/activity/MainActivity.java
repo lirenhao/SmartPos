@@ -28,7 +28,6 @@ public class MainActivity extends Activity {
     private FragmentManager fragmentManager;
     private Handler fragmentHandler;
     private WaitThreat waitThreat;
-    private IPacker packer;
     private VirtualPos virtualPos;
 
     private WaitThreat amountWaitThreat = new WaitThreat();
@@ -85,10 +84,6 @@ public class MainActivity extends Activity {
         return timeWheelWaitThreat;
     }
 
-    public IPacker getPacker() {
-        return packer;
-    }
-
     public VirtualPos getVirtualPos(){
         return virtualPos;
     }
@@ -104,14 +99,16 @@ public class MainActivity extends Activity {
         N900Device k21Device = new N900Device(this);
         k21Device.initController();
         k21Device.connectDevice();
-        // initEmv();
+        initEmv();
 
-        packer = new SposPacker(this, HexUtil.parseHex("60001200001306"));
+        // 初始化POS
+        IPacker packer = new SposPacker(this, HexUtil.parseHex("60001200001306"));
         IEncryption encryption = new EncryptionPos();
         String zmkTmk = "E5998509E585542884F1B3C0B3CD1053";
         virtualPos = new VirtualPos("104110070110814", "11000897", packer, "10.2.54.15", 1000, zmkTmk,
                 50000, encryption, mainActivity);
 
+        // 初始化界面调度
         fragmentManager = getFragmentManager();
         fragmentHandler = new Handler() {
             @Override
@@ -171,6 +168,12 @@ public class MainActivity extends Activity {
         Message msg = fragmentHandler.obtainMessage(0);
         msg.obj = "menu";
         msg.sendToTarget();
+    }
+
+    @Override
+    protected void onDestroy() {
+        virtualPos.store();
+        super.onDestroy();
     }
 
     private void initEmv() {

@@ -69,7 +69,7 @@ public class VirtualPos implements IVirtualPos<Traner> {
         this.packer = packer;
         this.traceNoSeqGenerator = new SequenceGenerator(mainActivity, "traceNo");
         this.cerNoSeqGenerator = new SequenceGenerator(mainActivity, "cerNo");
-        this.queue = new LinkedBlockingQueue<IMessage>();
+        this.queue = new LinkedBlockingQueue<>();
         this.mainActivity = mainActivity;
         //加载存储的冲正交易
         load(mainActivity);
@@ -80,10 +80,9 @@ public class VirtualPos implements IVirtualPos<Traner> {
     @Override
     public Traner createTraner() throws IOException, PackagingException {
         checkSingIn();
-        Traner traner = new Traner(merchantId, terminalId, tellerNo, batchNo,
+        return new Traner(merchantId, terminalId, tellerNo, batchNo,
                 packer, serverIp, serverPort, timeout, new CheckSignIn(this),
                 terminalAuth, traceNoSeqGenerator, cerNoSeqGenerator, queue);
-        return traner;
     }
 
     private synchronized void checkSingIn() throws IOException, PackagingException {
@@ -136,8 +135,20 @@ public class VirtualPos implements IVirtualPos<Traner> {
         }
     }
 
+    /**
+     * 将queue的内容持久化
+     */
     public void store() {
-
+        ReversalLogService service = new ReversalLogService(((App) mainActivity.getApplication()).getDbManager());
+        try {
+            for (IMessage message : queue) {
+                ReversalLog reversalLog = new ReversalLog();
+                reversalLog.setMessage(HexUtil.toHexString(packer.pack(message).array()));
+                service.save(reversalLog);
+            }
+        } catch (DbException | PackagingException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -150,6 +161,7 @@ public class VirtualPos implements IVirtualPos<Traner> {
             for (ReversalLog reversalLog : reversalLogs) {
                 queue.add(packer.unpack(ByteBuffer.wrap(HexUtil.parseHex(reversalLog.getMessage()))));
             }
+            service.delete();
         } catch (DbException | PackagingException e) {
             e.printStackTrace();
         }
@@ -167,10 +179,8 @@ public class VirtualPos implements IVirtualPos<Traner> {
                     IMessage message = queue.take();
                     // 转发
                     forward(message);
-                } catch (InterruptedException e) {
+                } catch (InterruptedException | RuntimeException e) {
                     // 程序停止时，回出现该异常。
-                } catch (RuntimeException e) {
-                    // LOG 保证工作线程不会因为意外原因退出。
                 }
             }
         }

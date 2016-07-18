@@ -4,6 +4,7 @@ import com.yada.smartpos.model.TransLog;
 import org.xutils.DbManager;
 import org.xutils.ex.DbException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class TransLogService {
@@ -27,6 +28,9 @@ public class TransLogService {
     }
 
     public List<TransLog> findByBatchNo(String batchNo) throws DbException {
-        return dbManager.selector(TransLog.class).and("batchNo", "=", batchNo).findAll();
+        List<TransLog> transLogs = dbManager.selector(TransLog.class).and("batchNo", "=", batchNo).findAll();
+        if(null == transLogs)
+            transLogs = new ArrayList<>();
+        return transLogs;
     }
 }
