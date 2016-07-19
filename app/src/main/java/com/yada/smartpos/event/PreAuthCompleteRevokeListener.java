@@ -74,7 +74,7 @@ public class PreAuthCompleteRevokeListener implements EmvLevel2ControllerExtList
 
     @Override
     public void onFallback(EmvTransInfo emvTransInfo) throws Exception {
-        handleListener.emvFallbackHandle(emvTransInfo);
+        handleListener.emvFallbackHandle();
     }
 
     @Override

@@ -241,7 +241,7 @@ public class TransHandleListener {
         }
     }
 
-    public void emvFallbackHandle(EmvTransInfo transInfo) {
+    public void emvFallbackHandle() {
         // 降级处理
         ((App) mainActivity.getApplication()).setFallback(true);
         mainActivity.getWaitThreat().notifyThread();
