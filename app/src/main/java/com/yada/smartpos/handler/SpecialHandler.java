@@ -41,41 +41,46 @@ public class SpecialHandler {
 
         // 输入金额
         handleListener.amountView();
-        // 启动刷卡
-        handleListener.swipeCardView();
-
-        BigDecimal amount = ((App) mainActivity.getApplication()).getTransData().getAmount();
-        // 判断是IC卡还是磁条卡
-        switch (((App) mainActivity.getApplication()).getTransData().getCardType()) {
-            case MSCARD:
-                // 磁条卡输入密码
-                handleListener.inputPinView();
-                // 联机交易
-                TransData transData = ((App) mainActivity.getApplication()).getTransData();
-                IMessage iMessage = mainActivity.getVirtualPos().createTraner().specialPay(
-                        transData.getAccount(), transData.getAmount().toString());
-                ResultHandler.result(mainActivity, iMessage);
-                break;
-            case ICCARD:
-                // 开启EMV流程
-                transListener = new SpecialPayListener(mainActivity, handleListener);
-                emvModule.initEmvModule(mainActivity);
-                controller = emvModule.getEmvTransController(transListener);
-                controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.USING_STANDARD_PROCESSINGCODE,
-                        amount.movePointLeft(2), new BigDecimal("0"), true);
-                mainActivity.getWaitThreat().waitForRslt();
-                break;
-            case RFCARD:
-                transListener = new SpecialPayListener(mainActivity, handleListener);
-                emvModule.initEmvModule(mainActivity);
-                controller = emvModule.getEmvTransController(transListener);
-                controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.RF_GOOD_SERVICE,
-                        amount.movePointLeft(2), new BigDecimal("0"), true);
-                mainActivity.getWaitThreat().waitForRslt();
-                break;
-            default:
-                break;
-        }
+        do {
+            // 启动刷卡
+            handleListener.swipeCardView();
+            BigDecimal amount = ((App) mainActivity.getApplication()).getTransData().getAmount();
+            // 判断是IC卡还是磁条卡
+            switch (((App) mainActivity.getApplication()).getTransData().getCardType()) {
+                case MSCARD:
+                    ((App) mainActivity.getApplication()).setFallback(false);
+                    // 磁条卡输入密码
+                    handleListener.inputPinView();
+                    // 联机交易
+                    TransData transData = ((App) mainActivity.getApplication()).getTransData();
+                    IMessage iMessage = mainActivity.getVirtualPos().createTraner().specialPay(
+                            transData.getAccount(), transData.getAmount().toString(),
+                            transData.getValidDate(), "901", transData.getSequenceNumber(),
+                            transData.getSecondTrackData(), transData.getThirdTrackData(),
+                            transData.getPin(), transData.getIcCardData());
+                    ResultHandler.result(mainActivity, iMessage);
+                    break;
+                case ICCARD:
+                    // 开启EMV流程
+                    transListener = new SpecialPayListener(mainActivity, handleListener);
+                    emvModule.initEmvModule(mainActivity);
+                    controller = emvModule.getEmvTransController(transListener);
+                    controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.USING_STANDARD_PROCESSINGCODE,
+                            amount.movePointLeft(2), new BigDecimal("0"), true);
+                    mainActivity.getWaitThreat().waitForRslt();
+                    break;
+                case RFCARD:
+                    transListener = new SpecialPayListener(mainActivity, handleListener);
+                    emvModule.initEmvModule(mainActivity);
+                    controller = emvModule.getEmvTransController(transListener);
+                    controller.startEmv(ProcessingCode.GOODS_AND_SERVICE, InnerProcessingCode.RF_GOOD_SERVICE,
+                            amount.movePointLeft(2), new BigDecimal("0"), true);
+                    mainActivity.getWaitThreat().waitForRslt();
+                    break;
+                default:
+                    break;
+            }
+        } while ((((App) mainActivity.getApplication()).isFallback()));
         // 保存交易流水
         handleListener.saveTransHandle();
         // 展示交易结果

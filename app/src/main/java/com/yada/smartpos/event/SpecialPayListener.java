@@ -61,7 +61,10 @@ public class SpecialPayListener implements EmvLevel2ControllerExtListener {
 
         TransData transData = ((App) mainActivity.getApplication()).getTransData();
         respMessage = mainActivity.getVirtualPos().createTraner().specialPay(
-                transData.getAccount(), transData.getAmount().toString());
+                transData.getAccount(), transData.getAmount().toString(),
+                transData.getValidDate(), "901", transData.getSequenceNumber(),
+                transData.getSecondTrackData(), transData.getThirdTrackData(),
+                transData.getPin(), transData.getIcCardData());
 
         handleListener.emvResultHandle(controller, transInfo, respMessage);
     }

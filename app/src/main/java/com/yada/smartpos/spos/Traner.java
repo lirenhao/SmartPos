@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
@@ -1282,12 +1283,64 @@ public class Traner extends AbsTraner {
     }
 
     /**
+     * 优惠商户
+     *
+     * @param cardNo          卡号
+     * @param amt             消费金额
+     * @param validity        效期
+     * @param posInputType    POS输入方式901|051
+     * @param sequenceNumber  卡片序列号
+     * @param secondTrackData 二磁道数据
+     * @param thirdTrackData  三磁道数据
+     * @param pin             PIN码
+     * @param icCardData      IC卡数据域
+     * @return 返回交易响应的message
+     */
+    public IMessage specialPay(String cardNo, String amt, String validity, String posInputType,
+                               String sequenceNumber, String secondTrackData, String thirdTrackData,
+                               String pin, String icCardData) {
+
+        BigDecimal amount = new BigDecimal(amt);
+        IMessage specialMessage = specialPay(cardNo, amt);
+        String field54 = specialMessage.getFieldString(54);
+        BigDecimal specialAmt = new BigDecimal(0);
+        BigDecimal limitAmt = new BigDecimal(0);
+        BigDecimal specialRate = new BigDecimal(1);
+        String tag, value;
+        int index = 0;
+        while (index < field54.length()) {
+            tag = field54.substring(index + 2, index + 4);
+            value = field54.substring(index + 2 + 2 + 4, index + 2 + 2 + 4 + 12);
+            index = index + 20;
+            // 折让金额
+            if (tag.equals("06")) {
+                specialAmt = new BigDecimal(value);
+            }
+            // 折扣上限
+            if (tag.equals("07")) {
+                limitAmt = new BigDecimal(value);
+            }
+            // 折扣率 0000+小数点位数(1位)+折扣(7位)
+            if (tag.equals("09")) {
+                int point = Integer.parseInt(value.substring(4, 5));
+                specialRate = new BigDecimal(value.substring(5)).movePointLeft(point);
+            }
+            // TODO 折扣上限、折扣率怎么用
+        }
+        // TODO 普惠消费如何冲正
+        return pay(cardNo, amount.subtract(specialAmt).toString(), validity, posInputType,
+                sequenceNumber, secondTrackData, thirdTrackData, pin, icCardData);
+    }
+
+    /**
      * 普惠查询
+     *
      * @param cardNo 卡号
-     * @param amt 原始金额
+     * @param amt    原始金额
      * @return
      */
-    public IMessage specialQuery(String cardNo, String amt){
+    public IMessage specialQuery(String cardNo, String amt) {
+        // TODO 普惠查询是否有用
         String processCode = "830008";
         String formatAmt = String.format("%12s", amt).replace(' ', '0');
         String traceNo = getTraceNo();
@@ -1325,11 +1378,12 @@ public class Traner extends AbsTraner {
 
     /**
      * 普惠消费
+     *
      * @param cardNo 卡号
-     * @param amt 原始金额
+     * @param amt    原始金额
      * @return
      */
-    public IMessage specialPay(String cardNo, String amt){
+    public IMessage specialPay(String cardNo, String amt) {
         String processCode = "840008";
         String formatAmt = String.format("%12s", amt).replace(' ', '0');
         String traceNo = getTraceNo();
