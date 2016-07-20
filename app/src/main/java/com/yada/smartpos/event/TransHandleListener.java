@@ -85,14 +85,6 @@ public class TransHandleListener {
         mainActivity.getInputPinWaitThreat().waitForRslt();
     }
 
-    public void authPasswordView() {
-        // 输入主管密码
-        Message message = mainActivity.getFragmentHandler().obtainMessage(10);
-        message.obj = "authPassword";
-        message.sendToTarget();
-        mainActivity.getAuthPasswordWaitThreat().waitForRslt();
-    }
-
     public void proofNoView() {
         Message message = mainActivity.getFragmentHandler().obtainMessage(4);
         message.obj = "proofNo";
@@ -133,6 +125,20 @@ public class TransHandleListener {
         message.obj = "timeWheel";
         message.sendToTarget();
         mainActivity.getTimeWheelWaitThreat().waitForRslt();
+    }
+
+    public void authPasswordView() {
+        // 输入主管密码
+        Message message = mainActivity.getFragmentHandler().obtainMessage(10);
+        message.obj = "authPassword";
+        message.sendToTarget();
+        mainActivity.getAuthPasswordWaitThreat().waitForRslt();
+    }
+
+    public void loadingView() {
+        Message message = mainActivity.getFragmentHandler().obtainMessage(11);
+        message.obj = "loading";
+        message.sendToTarget();
     }
 
     public void resultView() {

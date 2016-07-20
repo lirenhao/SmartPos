@@ -54,6 +54,7 @@ public class ConsumeHandler {
                     // 磁条卡输入密码
                     handleListener.inputPinView();
                     // 联机交易
+                    handleListener.loadingView();
                     TransData transData = ((App) mainActivity.getApplication()).getTransData();
                     IMessage iMessage = mainActivity.getVirtualPos().createTraner().pay(
                             transData.getAccount(), transData.getAmount().toString(),

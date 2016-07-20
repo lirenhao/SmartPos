@@ -122,51 +122,54 @@ public class MainActivity extends Activity {
                 FragmentTransaction tx = fragmentManager.beginTransaction();
                 switch (msg.what) {
                     case 0:
-                        tx.add(R.id.main, new MenuFragment(mainActivity), msg.obj.toString()).commit();
+                        tx.replace(R.id.main, new MenuFragment(mainActivity), msg.obj.toString()).commit();
                         break;
                     case 1:
-                        tx.add(R.id.main, new AmountFragment(mainActivity), msg.obj.toString())
-                                .addToBackStack(null).commitAllowingStateLoss();
+                        tx.replace(R.id.main, new AmountFragment(mainActivity), msg.obj.toString())
+                                .addToBackStack(null).commit();
                         break;
                     case 2:
-                        tx.add(R.id.main, new SwipeCardFragment(mainActivity), msg.obj.toString())
-                                .addToBackStack(null).commitAllowingStateLoss();
+                        tx.replace(R.id.main, new SwipeCardFragment(mainActivity), msg.obj.toString())
+                                .addToBackStack(null).commit();
                         break;
                     case 3:
-                        tx.add(R.id.main, new InputPinFragment(mainActivity), msg.obj.toString())
-                                .addToBackStack(null).commitAllowingStateLoss();
+                        tx.replace(R.id.main, new InputPinFragment(mainActivity), msg.obj.toString())
+                                .addToBackStack(null).commit();
                         break;
                     case 4:
-                        tx.add(R.id.main, new ProofNoFragment(mainActivity), msg.obj.toString())
-                                .addToBackStack(null).commitAllowingStateLoss();
+                        tx.replace(R.id.main, new ProofNoFragment(mainActivity), msg.obj.toString())
+                                .addToBackStack(null).commit();
                         break;
                     case 5:
-                        tx.add(R.id.main, new AuthCodeFragment(mainActivity), msg.obj.toString())
-                                .addToBackStack(null).commitAllowingStateLoss();
+                        tx.replace(R.id.main, new AuthCodeFragment(mainActivity), msg.obj.toString())
+                                .addToBackStack(null).commit();
                         break;
                     case 6:
-                        tx.add(R.id.main, new ShowFormFragment(mainActivity), msg.obj.toString())
-                                .addToBackStack(null).commitAllowingStateLoss();
+                        tx.replace(R.id.main, new ShowFormFragment(mainActivity), msg.obj.toString())
+                                .addToBackStack(null).commit();
                         break;
                     case 7:
-                        tx.add(R.id.main, new InstallmentFragment(mainActivity), msg.obj.toString())
-                                .addToBackStack(null).commitAllowingStateLoss();
+                        tx.replace(R.id.main, new InstallmentFragment(mainActivity), msg.obj.toString())
+                                .addToBackStack(null).commit();
                         break;
                     case 8:
-                        tx.add(R.id.main, new DateWheelFragment(mainActivity), msg.obj.toString())
-                                .addToBackStack(null).commitAllowingStateLoss();
+                        tx.replace(R.id.main, new DateWheelFragment(mainActivity), msg.obj.toString())
+                                .addToBackStack(null).commit();
                         break;
                     case 9:
-                        tx.add(R.id.main, new TimeWheelFragment(mainActivity), msg.obj.toString())
-                                .addToBackStack(null).commitAllowingStateLoss();
+                        tx.replace(R.id.main, new TimeWheelFragment(mainActivity), msg.obj.toString())
+                                .addToBackStack(null).commit();
                         break;
                     case 10:
-                        tx.add(R.id.main, new AuthPasswordFragment(mainActivity), msg.obj.toString())
-                                .addToBackStack(null).commitAllowingStateLoss();
+                        tx.replace(R.id.main, new AuthPasswordFragment(mainActivity), msg.obj.toString())
+                                .addToBackStack(null).commit();
+                        break;
+                    case 11:
+                        tx.add(R.id.main, new LoadingFragment(mainActivity), msg.obj.toString()).commit();
                         break;
                     case 100:
-                        tx.add(R.id.main, new OrderFragment(mainActivity), "result")
-                                .addToBackStack(null).commitAllowingStateLoss();
+                        tx.replace(R.id.main, new OrderFragment(mainActivity), msg.obj.toString())
+                                .addToBackStack(null).commit();
                         break;
                     default:
                         break;
