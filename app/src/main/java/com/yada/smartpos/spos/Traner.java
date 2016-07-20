@@ -1448,10 +1448,6 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(63, formatDebitNum + formatDebitAmt + formatCreditNum + formatCreditAmt);
 
             respMessage = sendTran(reqMessage);
-
-            //检查是否需要签到或参数下载
-            cs.checkMessage(respMessage);
-            field56Handle(respMessage);
         } catch (PackagingException e) {
             LOGGER.debug("when stagesPay happen PackagingException", e);
         } catch (IOException e) {
