@@ -1299,37 +1299,48 @@ public class Traner extends AbsTraner {
     public IMessage specialPay(String cardNo, String amt, String validity, String posInputType,
                                String sequenceNumber, String secondTrackData, String thirdTrackData,
                                String pin, String icCardData) {
-
-        BigDecimal amount = new BigDecimal(amt);
+        String processCode = "840008";
+        IMessage respMessage = null;
         IMessage specialMessage = specialPay(cardNo, amt);
-        String field54 = specialMessage.getFieldString(54);
-        BigDecimal specialAmt = new BigDecimal(0);
-        BigDecimal limitAmt = new BigDecimal(0);
-        BigDecimal specialRate = new BigDecimal(1);
-        String tag, value;
-        int index = 0;
-        while (index < field54.length()) {
-            tag = field54.substring(index + 2, index + 4);
-            value = field54.substring(index + 2 + 2 + 4, index + 2 + 2 + 4 + 12);
-            index = index + 20;
-            // 折让金额
-            if (tag.equals("06")) {
-                specialAmt = new BigDecimal(value);
+        if (null != specialMessage && "00".equals(specialMessage.getFieldString(39))){
+            String field54 = specialMessage.getFieldString(54);
+            BigDecimal amount = new BigDecimal(amt);
+            BigDecimal specialAmt = new BigDecimal(0);
+            BigDecimal limitAmt = new BigDecimal(0);
+            BigDecimal specialRate = new BigDecimal(1);
+            String tag, value;
+            int index = 0;
+            while (index < field54.length()) {
+                tag = field54.substring(index + 2, index + 4);
+                value = field54.substring(index + 2 + 2 + 4, index + 2 + 2 + 4 + 12);
+                index = index + 20;
+                // 折让金额
+                if (tag.equals("06")) {
+                    specialAmt = new BigDecimal(value);
+                }
+                // 折扣上限
+                if (tag.equals("07")) {
+                    limitAmt = new BigDecimal(value);
+                }
+                // 折扣率 0000+小数点位数(1位)+折扣(7位)
+                if (tag.equals("09")) {
+                    int point = Integer.parseInt(value.substring(4, 5));
+                    specialRate = new BigDecimal(value.substring(5)).movePointLeft(point);
+                }
+                // TODO 折扣上限、折扣率怎么用
             }
-            // 折扣上限
-            if (tag.equals("07")) {
-                limitAmt = new BigDecimal(value);
+            respMessage = pay(cardNo, amount.subtract(specialAmt).toString(), validity, posInputType,
+                    sequenceNumber, secondTrackData, thirdTrackData, pin, icCardData);
+            if (null == respMessage || !"00".equals(respMessage.getFieldString(39))){
+                // 普惠消费冲正
+                try {
+                    addElementToQueue(createSpecialMessage(cardNo, processCode, amt));
+                } catch (PackagingException e) {
+                    LOGGER.debug("when stagesPay happen PackagingException", e);
+                }
             }
-            // 折扣率 0000+小数点位数(1位)+折扣(7位)
-            if (tag.equals("09")) {
-                int point = Integer.parseInt(value.substring(4, 5));
-                specialRate = new BigDecimal(value.substring(5)).movePointLeft(point);
-            }
-            // TODO 折扣上限、折扣率怎么用
         }
-        // TODO 普惠消费如何冲正
-        return pay(cardNo, amount.subtract(specialAmt).toString(), validity, posInputType,
-                sequenceNumber, secondTrackData, thirdTrackData, pin, icCardData);
+        return respMessage;
     }
 
     /**
@@ -1339,30 +1350,13 @@ public class Traner extends AbsTraner {
      * @param amt    原始金额
      * @return
      */
+
     public IMessage specialQuery(String cardNo, String amt) {
         // TODO 普惠查询是否有用
         String processCode = "830008";
-        String formatAmt = String.format("%12s", amt).replace(' ', '0');
-        String traceNo = getTraceNo();
-        String currency = "156";
         IMessage respMessage = null;
         try {
-            IMessage reqMessage = createMessage();
-            reqMessage.setFieldString(0, "0200");
-            reqMessage.setFieldString(2, cardNo);
-            reqMessage.setFieldString(3, processCode);
-            reqMessage.setFieldString(4, formatAmt);
-            reqMessage.setFieldString(11, traceNo);
-            reqMessage.setFieldString(22, "012");
-            reqMessage.setFieldString(24, "009");
-            reqMessage.setFieldString(25, "14");
-            reqMessage.setFieldString(41, getTerminalId());
-            reqMessage.setFieldString(42, getMerchantId());
-            reqMessage.setFieldString(48, "75002A4");
-            reqMessage.setFieldString(49, currency);
-            reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());
-            reqMessage.setField(64, getMac(packMacData(cardNo, processCode, formatAmt, traceNo, null, null, currency, null, null)));
-
+            IMessage reqMessage = createSpecialMessage(cardNo, processCode, amt);
             respMessage = sendTran(reqMessage);
 
             //检查是否需要签到或参数下载
@@ -1385,28 +1379,10 @@ public class Traner extends AbsTraner {
      */
     public IMessage specialPay(String cardNo, String amt) {
         String processCode = "840008";
-        String formatAmt = String.format("%12s", amt).replace(' ', '0');
-        String traceNo = getTraceNo();
-        String currency = "156";
         IMessage respMessage = null;
-        IMessage reqMessage;
+        IMessage reqMessage = null;
         try {
-            reqMessage = createMessage();
-            reqMessage.setFieldString(0, "0200");
-            reqMessage.setFieldString(2, cardNo);
-            reqMessage.setFieldString(3, processCode);
-            reqMessage.setFieldString(4, formatAmt);
-            reqMessage.setFieldString(11, traceNo);
-            reqMessage.setFieldString(22, "012");
-            reqMessage.setFieldString(24, "009");
-            reqMessage.setFieldString(25, "14");
-            reqMessage.setFieldString(41, getTerminalId());
-            reqMessage.setFieldString(42, getMerchantId());
-            reqMessage.setFieldString(48, "75002A4");
-            reqMessage.setFieldString(49, currency);
-            reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());
-            reqMessage.setField(64, getMac(packMacData(cardNo, processCode, formatAmt, traceNo, null, null, currency, null, null)));
-
+            reqMessage = createSpecialMessage(cardNo, processCode, amt);
             respMessage = sendTran(reqMessage);
 
             //检查是否需要签到或参数下载
@@ -1416,8 +1392,33 @@ public class Traner extends AbsTraner {
             LOGGER.debug("when stagesPay happen PackagingException", e);
         } catch (IOException e) {
             LOGGER.debug("when stagesPay happen IOException", e);
+            addElementToQueue(reqMessage);
         }
         return respMessage;
+    }
+
+    private IMessage createSpecialMessage(String cardNo, String processCode, String amt) throws PackagingException {
+        String formatAmt = String.format("%12s", amt).replace(' ', '0');
+        String traceNo = getTraceNo();
+        String currency = "156";
+
+        IMessage reqMessage = createMessage();
+        reqMessage.setFieldString(0, "0200");
+        reqMessage.setFieldString(2, cardNo);
+        reqMessage.setFieldString(3, processCode);
+        reqMessage.setFieldString(4, formatAmt);
+        reqMessage.setFieldString(11, traceNo);
+        reqMessage.setFieldString(22, "012");
+        reqMessage.setFieldString(24, "009");
+        reqMessage.setFieldString(25, "14");
+        reqMessage.setFieldString(41, getTerminalId());
+        reqMessage.setFieldString(42, getMerchantId());
+        reqMessage.setFieldString(48, "75002A4");
+        reqMessage.setFieldString(49, currency);
+        reqMessage.setFieldString(61, getBatchNo() + getTellerNo() + getCerNo());
+        reqMessage.setField(64, getMac(packMacData(cardNo, processCode, formatAmt, traceNo, null, null, currency, null, null)));
+
+        return reqMessage;
     }
 
     /**
@@ -1447,6 +1448,10 @@ public class Traner extends AbsTraner {
             reqMessage.setFieldString(63, formatDebitNum + formatDebitAmt + formatCreditNum + formatCreditAmt);
 
             respMessage = sendTran(reqMessage);
+
+            //检查是否需要签到或参数下载
+            cs.checkMessage(respMessage);
+            field56Handle(respMessage);
         } catch (PackagingException e) {
             LOGGER.debug("when stagesPay happen PackagingException", e);
         } catch (IOException e) {

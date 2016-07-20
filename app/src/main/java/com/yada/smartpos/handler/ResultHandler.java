@@ -19,6 +19,8 @@ public class ResultHandler {
             String transResp = iMessage.toString();
             ((App) mainActivity.getApplication()).getTransResult().setTransResp(transResp);
             ((App) mainActivity.getApplication()).getTransResult().setTransMsg(iMessage.getFieldString(39));
+        } else {
+            ((App) mainActivity.getApplication()).getTransResult().setTransMsg("");
         }
         ((App) mainActivity.getApplication()).getTransResult().setMessageResp(iMessage);
     }
