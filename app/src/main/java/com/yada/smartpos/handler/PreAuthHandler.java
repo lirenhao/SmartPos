@@ -56,6 +56,7 @@ public class PreAuthHandler {
                     // 磁条卡输入密码
                     handleListener.inputPinView();
                     // 联机交易
+                    handleListener.loadingView();
                     TransData transData = ((App) mainActivity.getApplication()).getTransData();
                     IMessage iMessage = mainActivity.getVirtualPos().createTraner().preAuth(
                             transData.getAccount(), transData.getAmount().toString(),
@@ -116,6 +117,7 @@ public class PreAuthHandler {
                     // 输入撤销金额
                     handleListener.amountView();
                     // 联机交易
+                    handleListener.loadingView();
                     TransData transData = ((App) mainActivity.getApplication()).getTransData();
                     IMessage iMessage = mainActivity.getVirtualPos().createTraner().preAuthRevoke(
                             transData.getAccount(), transData.getAmount().toString(),
@@ -173,6 +175,7 @@ public class PreAuthHandler {
                     // 输入金额
                     handleListener.amountView();
                     // 联机交易
+                    handleListener.loadingView();
                     TransData transData = ((App) mainActivity.getApplication()).getTransData();
                     IMessage iMessage = mainActivity.getVirtualPos().createTraner().preAuthComplete(transData.getAccount(),
                             transData.getAmount().toString(), transData.getValidDate(), "901", transData.getSequenceNumber(),
@@ -232,6 +235,7 @@ public class PreAuthHandler {
                 case MSCARD:
                     ((App) mainActivity.getApplication()).setFallback(false);
                     // 联机交易
+                    handleListener.loadingView();
                     TransData transData = ((App) mainActivity.getApplication()).getTransData();
                     IMessage iMessage = mainActivity.getVirtualPos().createTraner().preAuthCompleteRevoke(transData.getAccount(),
                             transData.getAmount().toString(), transData.getValidDate(), "901", transData.getSequenceNumber(),

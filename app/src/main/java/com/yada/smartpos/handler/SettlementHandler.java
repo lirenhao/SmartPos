@@ -5,7 +5,11 @@ import com.yada.sdk.packages.transaction.IMessage;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
 import com.yada.smartpos.db.service.TransLogService;
+import com.yada.smartpos.event.TransHandleListener;
+import com.yada.smartpos.model.TransData;
 import com.yada.smartpos.model.TransLog;
+import com.yada.smartpos.model.TransResult;
+import com.yada.smartpos.util.TransType;
 
 import java.io.IOException;
 import java.util.List;
@@ -13,12 +17,18 @@ import java.util.List;
 public class SettlementHandler {
 
     private MainActivity mainActivity;
+    private TransHandleListener handleListener;
 
     public SettlementHandler(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
+        this.handleListener = new TransHandleListener(mainActivity);
     }
 
-    public void settlement() throws IOException, PackagingException {
+    public void bill() throws IOException, PackagingException {
+        ((App) mainActivity.getApplication()).setTransData(new TransData());
+        ((App) mainActivity.getApplication()).setTransResult(new TransResult());
+        ((App) mainActivity.getApplication()).getTransData().setTransType(TransType.BILL);
+        handleListener.loadingView();
         int debitNum = 0;
         int debitAmt = 0;
         int creditNum = 0;
@@ -36,5 +46,7 @@ public class SettlementHandler {
         }
         IMessage respMessage = mainActivity.getVirtualPos().createTraner().
                 settlement(debitNum, debitAmt, creditNum, creditAmt);
+        ResultHandler.result(mainActivity, respMessage);
+        handleListener.resultView();
     }
 }

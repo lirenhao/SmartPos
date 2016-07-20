@@ -19,7 +19,9 @@ public enum TransType {
     SPECIAL_PAY("普惠消费"),
 
     EC_CONSUMPTION("电子现金消费"),
-    QUERY("余额查询");
+    QUERY("余额查询"),
+    BILL("结算");
+
 
     public String transType;
 

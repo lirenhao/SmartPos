@@ -52,6 +52,7 @@ public class SpecialHandler {
                     // 磁条卡输入密码
                     handleListener.inputPinView();
                     // 联机交易
+                    handleListener.loadingView();
                     TransData transData = ((App) mainActivity.getApplication()).getTransData();
                     IMessage iMessage = mainActivity.getVirtualPos().createTraner().specialPay(
                             transData.getAccount(), transData.getAmount().toString(),

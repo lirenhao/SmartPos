@@ -28,6 +28,7 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
     private SignInHandler signInHandler;
     private QueryHandler queryHandler;
     private SpecialHandler specialHandler;
+    private SettlementHandler settlementHandler;
 
     private String[] arrText = new String[]{
             "消费", "消费撤销", "消费退货",
@@ -53,6 +54,7 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
         signInHandler = new SignInHandler(mainActivity);
         queryHandler = new QueryHandler(mainActivity);
         specialHandler = new SpecialHandler(mainActivity);
+        settlementHandler = new SettlementHandler(mainActivity);
     }
 
     @Override
@@ -261,7 +263,11 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-
+                        try {
+                            settlementHandler.bill();
+                        } catch (IOException | PackagingException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }).start();
                 break;

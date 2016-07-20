@@ -1,24 +1,23 @@
 package com.yada.smartpos.handler;
 
-import com.newland.mtype.module.common.pin.WorkingKeyType;
-import com.payneteasy.tlv.HexUtil;
 import com.yada.sdk.packages.PackagingException;
 import com.yada.smartpos.activity.MainActivity;
-import com.yada.smartpos.module.PinInputModule;
-import com.yada.smartpos.module.impl.PinInputModuleImpl;
-import com.yada.smartpos.util.Const;
+import com.yada.smartpos.event.TransHandleListener;
 
 import java.io.IOException;
 
 public class SignInHandler {
 
     private MainActivity mainActivity;
+    private TransHandleListener handleListener;
 
     public SignInHandler(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
+        this.handleListener = new TransHandleListener(mainActivity);
     }
 
     public void signIn() throws IOException, PackagingException {
+        handleListener.loadingView();
         mainActivity.getVirtualPos().resetSingIn();
         mainActivity.getVirtualPos().resetParamDownload();
         mainActivity.getVirtualPos().createTraner();
@@ -28,14 +27,5 @@ public class SignInHandler {
         mainActivity.getVirtualPos().resetSingIn();
         mainActivity.getVirtualPos().resetParamDownload();
         mainActivity.getVirtualPos().createTraner();
-    }
-
-    private void loadWorkingKey(String field48) {
-        String tpk = field48.substring(5, 37);
-        PinInputModule pinInput = new PinInputModuleImpl();
-        byte[] kcv = pinInput.loadWorkingKey(WorkingKeyType.PININPUT, 2,
-                Const.PinWKIndexConst.DEFAULT_PIN_WK_INDEX, HexUtil.parseHex(tpk), null);
-        System.out.println(field48.substring(39, 55));
-        System.out.println(HexUtil.toHexString(kcv));
     }
 }

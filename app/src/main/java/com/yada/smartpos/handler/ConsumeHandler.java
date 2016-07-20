@@ -116,6 +116,7 @@ public class ConsumeHandler {
                     // 磁条卡输入密码
                     handleListener.inputPinView();
                     // 联机交易
+                    handleListener.loadingView();
                     TransData transData = ((App) mainActivity.getApplication()).getTransData();
                     IMessage iMessage = mainActivity.getVirtualPos().createTraner().revoke(transData.getAccount(), transData.getAmount().toString(),
                             transData.getValidDate(), "901", transData.getSequenceNumber(), transData.getSecondTrackData(),
@@ -173,7 +174,8 @@ public class ConsumeHandler {
                     handleListener.authCodeView();
                     // 输入退货金额
                     handleListener.amountView();
-
+                    // 联机交易
+                    handleListener.loadingView();
                     TransData transData = ((App) mainActivity.getApplication()).getTransData();
                     IMessage iMessage = mainActivity.getVirtualPos().createTraner().refund(
                             transData.getAccount(), transData.getAmount().toString(),

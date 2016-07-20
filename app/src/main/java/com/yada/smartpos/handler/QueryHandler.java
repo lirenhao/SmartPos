@@ -42,6 +42,7 @@ public class QueryHandler {
                 // 磁条卡输入密码
                 handleListener.inputPinView();
                 // 联机交易
+                handleListener.loadingView();
                 TransData transData = ((App) mainActivity.getApplication()).getTransData();
                 IMessage iMessage = mainActivity.getVirtualPos().createTraner().query(transData.getAccount(),
                         transData.getValidDate(), "901", transData.getSequenceNumber(), transData.getSecondTrackData(),

@@ -59,6 +59,7 @@ public class InstallmentHandler {
                     // 磁条卡输入密码
                     handleListener.inputPinView();
                     // 联机交易
+                    handleListener.loadingView();
                     TransData transData = ((App) mainActivity.getApplication()).getTransData();
                     IMessage iMessage = mainActivity.getVirtualPos().createTraner().stagesPay(
                             transData.getAccount(), transData.getAmount().toString(), transData.getValidDate(), "051",
@@ -117,6 +118,7 @@ public class InstallmentHandler {
                 case MSCARD:
                     ((App) mainActivity.getApplication()).setFallback(false);
                     // 联机交易
+                    handleListener.loadingView();
                     TransData transData = ((App) mainActivity.getApplication()).getTransData();
                     IMessage iMessage = mainActivity.getVirtualPos().createTraner().stagesRevoke(transData.getAccount(), transData.getAmount().toString(),
                             transData.getValidDate(), "901", transData.getSequenceNumber(), transData.getSecondTrackData(),
@@ -176,6 +178,8 @@ public class InstallmentHandler {
                     handleListener.amountView();
                     // 输入分期期数
                     handleListener.installmentView();
+                    // 联机交易
+                    handleListener.loadingView();
                     TransData transData = ((App) mainActivity.getApplication()).getTransData();
                     IMessage iMessage = mainActivity.getVirtualPos().createTraner().stagesRefund(transData.getAccount(), transData.getAmount().toString(),
                             transData.getValidDate(), "901", transData.getSequenceNumber(), transData.getSecondTrackData(),
