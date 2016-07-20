@@ -59,6 +59,7 @@ public class SpecialPayListener implements EmvLevel2ControllerExtListener {
     public void onRequestOnline(EmvTransController controller, EmvTransInfo transInfo) throws Exception {
         handleListener.emvDataHandle(transInfo);
 
+        handleListener.loadingView();
         TransData transData = ((App) mainActivity.getApplication()).getTransData();
         respMessage = mainActivity.getVirtualPos().createTraner().specialPay(
                 transData.getAccount(), transData.getAmount().toString(),

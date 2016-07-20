@@ -122,6 +122,10 @@ public class MainActivity extends Activity {
                 FragmentTransaction tx = fragmentManager.beginTransaction();
                 switch (msg.what) {
                     case 0:
+                        fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                        ((App) mainActivity.getApplication()).setTransData(null);
+                        ((App) mainActivity.getApplication()).setTransResult(null);
+                        ((App) mainActivity.getApplication()).setFallback(false);
                         tx.replace(R.id.main, new MenuFragment(mainActivity), msg.obj.toString()).commit();
                         break;
                     case 1:

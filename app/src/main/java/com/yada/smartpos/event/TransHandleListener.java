@@ -61,6 +61,13 @@ public class TransHandleListener {
         this.mainActivity = mainActivity;
     }
 
+    public void menuView() {
+        // 调用输入金额界面
+        Message message = mainActivity.getFragmentHandler().obtainMessage(0);
+        message.obj = "menu";
+        message.sendToTarget();
+    }
+
     public void amountView() {
         // 调用输入金额界面
         Message message = mainActivity.getFragmentHandler().obtainMessage(1);
@@ -136,6 +143,7 @@ public class TransHandleListener {
     }
 
     public void loadingView() {
+        // 输入主管密码
         Message message = mainActivity.getFragmentHandler().obtainMessage(11);
         message.obj = "loading";
         message.sendToTarget();
@@ -171,6 +179,9 @@ public class TransHandleListener {
                         result.append("余额查询\n\n").
                                 append("账户余额：").append(ledgerBalance.movePointLeft(2).toString()).append("\n").
                                 append("可用余额：").append(availableBalance.movePointLeft(2).toString());
+                        break;
+                    case BILL:
+                        result.append("结算完成，请重新签到！");
                         break;
                     default:
                         result.append("\n\n").append("           ").

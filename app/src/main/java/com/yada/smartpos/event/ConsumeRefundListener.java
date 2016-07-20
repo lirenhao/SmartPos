@@ -66,6 +66,7 @@ public class ConsumeRefundListener implements EmvLevel2ControllerExtListener {
         // 输入退货金额
         handleListener.amountView();
 
+        handleListener.loadingView();
         TransData transData = ((App) mainActivity.getApplication()).getTransData();
         respMessage = mainActivity.getVirtualPos().createTraner().refund(transData.getAccount(), transData.getAmount().toString(),
                 transData.getValidDate(), "051", transData.getSequenceNumber(), transData.getSecondTrackData(),

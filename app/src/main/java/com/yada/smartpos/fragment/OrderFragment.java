@@ -2,7 +2,6 @@ package com.yada.smartpos.fragment;
 
 import android.app.Fragment;
 import android.os.Bundle;
-import android.os.Message;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,6 +15,7 @@ import com.newland.mtype.module.common.printer.WordStockType;
 import com.yada.smartpos.R;
 import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
+import com.yada.smartpos.event.TransHandleListener;
 import com.yada.smartpos.model.TransResult;
 import com.yada.smartpos.module.PrinterModule;
 import com.yada.smartpos.module.impl.PrinterModuleImpl;
@@ -23,10 +23,12 @@ import com.yada.smartpos.module.impl.PrinterModuleImpl;
 public class OrderFragment extends Fragment implements View.OnClickListener {
 
     private MainActivity mainActivity;
+    private TransHandleListener handleListener;
     private String orderString;
 
     public OrderFragment(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
+        this.handleListener = new TransHandleListener(mainActivity);
     }
 
     @Override
@@ -46,6 +48,7 @@ public class OrderFragment extends Fragment implements View.OnClickListener {
             if ("1".equals(transResult.getTransCode())) {
                 switch (((App) mainActivity.getApplication()).getTransData().getTransType()) {
                     case QUERY:
+                    case BILL:
                         orderView.setGravity(Gravity.CENTER);
                         orderView.setText(transResult.getResultText());
                         break;
@@ -67,9 +70,7 @@ public class OrderFragment extends Fragment implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        Message message = mainActivity.getFragmentHandler().obtainMessage(0);
-        message.obj = "menu";
-        message.sendToTarget();
+        handleListener.menuView();
     }
 
     private void doPrinter() {

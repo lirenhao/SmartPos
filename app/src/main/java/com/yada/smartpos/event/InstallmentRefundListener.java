@@ -68,6 +68,7 @@ public class InstallmentRefundListener implements EmvLevel2ControllerExtListener
         // 输入分期期数
         handleListener.installmentView();
 
+        handleListener.loadingView();
         TransData transData = ((App) mainActivity.getApplication()).getTransData();
         respMessage = mainActivity.getVirtualPos().createTraner().refund(transData.getAccount(), transData.getAmount().toString(),
                 transData.getValidDate(), "051", transData.getSequenceNumber(), transData.getSecondTrackData(),

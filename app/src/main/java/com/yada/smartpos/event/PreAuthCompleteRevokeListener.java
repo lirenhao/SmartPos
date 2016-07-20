@@ -56,6 +56,7 @@ public class PreAuthCompleteRevokeListener implements EmvLevel2ControllerExtList
     public void onRequestOnline(EmvTransController controller, EmvTransInfo transInfo) throws Exception {
         handleListener.emvDataHandle(transInfo);
 
+        handleListener.loadingView();
         TransData transData = ((App) mainActivity.getApplication()).getTransData();
         respMessage = mainActivity.getVirtualPos().createTraner().preAuthCompleteRevoke(
                 transData.getAccount(), transData.getAmount().toString(),

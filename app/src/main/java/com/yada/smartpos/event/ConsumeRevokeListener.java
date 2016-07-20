@@ -56,6 +56,7 @@ public class ConsumeRevokeListener implements EmvLevel2ControllerExtListener {
     public void onRequestOnline(EmvTransController controller, EmvTransInfo transInfo) throws Exception {
         handleListener.emvDataHandle(transInfo);
 
+        handleListener.loadingView();
         TransData transData = ((App) mainActivity.getApplication()).getTransData();
         respMessage = mainActivity.getVirtualPos().createTraner().revoke(transData.getAccount(), transData.getAmount().toString(),
                 transData.getValidDate(), "051", transData.getSequenceNumber(), transData.getSecondTrackData(),

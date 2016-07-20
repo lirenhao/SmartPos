@@ -59,6 +59,7 @@ public class QueryTransListener implements EmvLevel2ControllerExtListener {
     public void onRequestOnline(EmvTransController controller, EmvTransInfo transInfo) throws Exception {
         handleListener.emvDataHandle(transInfo);
 
+        handleListener.loadingView();
         TransData transData = ((App) mainActivity.getApplication()).getTransData();
         respMessage = mainActivity.getVirtualPos().createTraner().query(transData.getAccount(),
                 transData.getValidDate(), "051", transData.getSequenceNumber(),

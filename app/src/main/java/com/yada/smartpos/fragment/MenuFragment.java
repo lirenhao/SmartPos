@@ -1,7 +1,6 @@
 package com.yada.smartpos.fragment;
 
 import android.app.Fragment;
-import android.app.FragmentManager;
 import android.os.Bundle;
 import android.os.Message;
 import android.view.LayoutInflater;
@@ -60,12 +59,6 @@ public class MenuFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        FragmentManager manager = getFragmentManager();
-        // 清空堆栈
-        manager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-        ((App) mainActivity.getApplication()).setTransData(null);
-        ((App) mainActivity.getApplication()).setTransResult(null);
-        ((App) mainActivity.getApplication()).setFallback(false);
     }
 
     @Override

@@ -12,7 +12,6 @@ import com.yada.smartpos.activity.App;
 import com.yada.smartpos.activity.MainActivity;
 import com.yada.smartpos.db.service.ReversalLogService;
 import com.yada.smartpos.model.ReversalLog;
-import com.yada.smartpos.util.Const;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xutils.ex.DbException;
@@ -85,32 +84,42 @@ public class VirtualPos implements IVirtualPos<Traner> {
                 terminalAuth, traceNoSeqGenerator, cerNoSeqGenerator, queue);
     }
 
+    public boolean signIn() throws IOException, PackagingException {
+        Traner traner = new Traner(merchantId, terminalId, tellerNo, batchNo,
+                packer, serverIp, serverPort, timeout, new CheckSignIn(this),
+                terminalAuth, traceNoSeqGenerator, cerNoSeqGenerator, queue);
+
+        SigninInfo si = traner.singIn();
+        batchNo = si.batchNo;
+        terminalAuth.setTak(si.tmkTak);
+        terminalAuth.setTpk(si.tmkTpk);
+        traner.close();
+        needSignin = false;
+
+        return !needSignin;
+    }
+
+    public boolean paramDownload() throws IOException, PackagingException {
+        Traner traner = new Traner(merchantId, terminalId, tellerNo, batchNo,
+                packer, serverIp, serverPort, timeout, new CheckSignIn(this),
+                terminalAuth, traceNoSeqGenerator, cerNoSeqGenerator, queue);
+
+        ParamInfo paramInfo = traner.paramDownload();
+        terminalParam.setBlock01(paramInfo.getBlock01());
+        terminalParam.setAid(paramInfo.getBlock03Map());
+        terminalParam.setCAPK(paramInfo.getBlock04_1Map(), paramInfo.getBlock04_2Map());
+        traner.close();
+        needParamDownload = false;
+
+        return !needParamDownload;
+    }
+
     private synchronized void checkSingIn() throws IOException, PackagingException {
         if (needSignin) {
-            Traner traner = new Traner(merchantId, terminalId, tellerNo, batchNo,
-                    packer, serverIp, serverPort, timeout, new CheckSignIn(this),
-                    terminalAuth, traceNoSeqGenerator, cerNoSeqGenerator, queue);
-
-            SigninInfo si = traner.singIn();
-            batchNo = si.batchNo;
-            terminalAuth.setTak(si.tmkTak);
-            terminalAuth.setTpk(si.tmkTpk);
-            traner.close();
-            needSignin = false;
-            mainActivity.showMessage("签到完成！", Const.MessageTag.NORMAL);
+            signIn();
         }
-
         if (needParamDownload) {
-            Traner traner = new Traner(merchantId, terminalId, tellerNo, batchNo,
-                    packer, serverIp, serverPort, timeout, new CheckSignIn(this),
-                    terminalAuth, traceNoSeqGenerator, cerNoSeqGenerator, queue);
-            ParamInfo paramInfo = traner.paramDownload();
-            terminalParam.setBlock01(paramInfo.getBlock01());
-            terminalParam.setAid(paramInfo.getBlock03Map());
-            terminalParam.setCAPK(paramInfo.getBlock04_1Map(), paramInfo.getBlock04_2Map());
-            traner.close();
-            needParamDownload = false;
-            mainActivity.showMessage("参数下载完成！", Const.MessageTag.NORMAL);
+            paramDownload();
         }
     }
 

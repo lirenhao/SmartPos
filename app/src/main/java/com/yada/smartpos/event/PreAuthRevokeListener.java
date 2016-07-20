@@ -64,6 +64,7 @@ public class PreAuthRevokeListener implements EmvLevel2ControllerExtListener {
         // 输入授权号
         handleListener.authCodeView();
 
+        handleListener.loadingView();
         TransData transData = ((App) mainActivity.getApplication()).getTransData();
         respMessage = mainActivity.getVirtualPos().createTraner().preAuthRevoke(
                 transData.getAccount(), transData.getAmount().toString(),

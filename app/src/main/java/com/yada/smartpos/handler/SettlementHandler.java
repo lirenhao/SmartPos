@@ -38,14 +38,15 @@ public class SettlementHandler {
         for (TransLog transLog : transLogs) {
             if (Integer.parseInt(transLog.getCardType()) % 2 == 1) {
                 debitNum += 1;
-                debitAmt += Integer.parseInt(transLog.getAccount());
+                debitAmt += Integer.parseInt(transLog.getAmount());
             } else {
                 creditNum += 1;
-                creditAmt += Integer.parseInt(transLog.getAccount());
+                creditAmt += Integer.parseInt(transLog.getAmount());
             }
         }
         IMessage respMessage = mainActivity.getVirtualPos().createTraner().
                 settlement(debitNum, debitAmt, creditNum, creditAmt);
+        mainActivity.getVirtualPos().resetSingIn();
         ResultHandler.result(mainActivity, respMessage);
         handleListener.resultView();
     }
