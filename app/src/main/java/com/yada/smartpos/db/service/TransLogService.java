@@ -33,4 +33,11 @@ public class TransLogService {
             transLogs = new ArrayList<>();
         return transLogs;
     }
+
+    public List<TransLog> findAll() throws DbException {
+        List<TransLog> transLogs = dbManager.findAll(TransLog.class);
+        if(null == transLogs)
+            transLogs = new ArrayList<>();
+        return transLogs;
+    }
 }

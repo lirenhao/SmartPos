@@ -15,8 +15,8 @@ public class TransLog {
     private String transType;
 
     // 刷卡类型
-    @Column(name = "cardType")
-    private String cardType;
+    @Column(name = "swipeCard")
+    private String swipeCard;
 
     // 卡号
     @Column(name = "account")
@@ -42,6 +42,9 @@ public class TransLog {
     @Column(name = "batchNo")
     private String batchNo;
 
+    @Column(name = "cardType")
+    private String cardType;
+
     public String getTraceNo() {
         return traceNo;
     }
@@ -58,12 +61,12 @@ public class TransLog {
         this.transType = transType;
     }
 
-    public String getCardType() {
-        return cardType;
+    public String getSwipeCard() {
+        return swipeCard;
     }
 
-    public void setCardType(String cardType) {
-        this.cardType = cardType;
+    public void setSwipeCard(String swipeCard) {
+        this.swipeCard = swipeCard;
     }
 
     public String getAccount() {
@@ -112,5 +115,13 @@ public class TransLog {
 
     public void setBatchNo(String batchNo) {
         this.batchNo = batchNo;
+    }
+
+    public String getCardType() {
+        return cardType;
+    }
+
+    public void setCardType(String cardType) {
+        this.cardType = cardType;
     }
 }

@@ -257,13 +257,14 @@ public class TransHandleListener {
             TransLog transLog = new TransLog();
             transLog.setTraceNo(message.getFieldString(11));
             transLog.setTransType(transData.getTransType().toString());
-            transLog.setCardType(transData.getCardType().toString());
+            transLog.setSwipeCard(transData.getCardType().toString());
             transLog.setAccount(message.getFieldString(2));
             transLog.setAuthCode(message.getFieldString(38));
             transLog.setTransTime(message.getFieldString(12));
             transLog.setTransDate(message.getFieldString(13));
             transLog.setAmount(message.getFieldString(4));
             transLog.setBatchNo(message.getFieldString(61).substring(0, 6));
+            transLog.setCardType(message.getFieldString(61).substring(15, 17));
 
             TransLogService service = new TransLogService(((App) mainActivity.getApplication()).getDbManager());
             service.save(transLog);

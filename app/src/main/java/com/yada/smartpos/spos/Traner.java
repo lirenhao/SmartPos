@@ -1421,6 +1421,45 @@ public class Traner extends AbsTraner {
     }
 
     /**
+     * 结算
+     *
+     * @param debitNum  借记交易总笔数
+     * @param debitAmt  借记交易总金额
+     * @param creditNum 贷记交易总笔数
+     * @param creditAmt 贷记交易总金额
+     * @return
+     */
+    public IMessage settlement(int debitNum, int debitAmt, int creditNum, int creditAmt) {
+        String formatDebitNum = String.format("%3s", debitNum).replace(' ', '0');
+        String formatDebitAmt = String.format("%12s", debitAmt).replace(' ', '0');
+        String formatCreditNum = String.format("%3s", creditNum).replace(' ', '0');
+        String formatCreditAmt = String.format("%12s", creditAmt).replace(' ', '0');
+        String traceNo = getTraceNo();
+        IMessage respMessage = null;
+        try {
+            IMessage reqMessage = createMessage();
+            reqMessage.setFieldString(0, "0500");
+            reqMessage.setFieldString(11, traceNo);
+            reqMessage.setFieldString(24, "009");
+            reqMessage.setFieldString(41, getTerminalId());
+            reqMessage.setFieldString(42, getMerchantId());
+            reqMessage.setFieldString(61, getBatchNo());
+            reqMessage.setFieldString(63, formatDebitNum + formatDebitAmt + formatCreditNum + formatCreditAmt);
+
+            respMessage = sendTran(reqMessage);
+
+            //检查是否需要签到或参数下载
+            cs.checkMessage(respMessage);
+            field56Handle(respMessage);
+        } catch (PackagingException e) {
+            LOGGER.debug("when stagesPay happen PackagingException", e);
+        } catch (IOException e) {
+            LOGGER.debug("when stagesPay happen IOException", e);
+        }
+        return respMessage;
+    }
+
+    /**
      * 冲正交易
      *
      * @param orgMessage 要冲正的交易报文

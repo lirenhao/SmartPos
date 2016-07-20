@@ -4,7 +4,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="#DBDBDB"
-                tools:context="com.yada.smartpos.MainActivity">
+                tools:context="com.yada.smartpos.activity.MainActivity">
 
     <FrameLayout
             android:id="@+id/main"
