@@ -18,11 +18,9 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class Traner extends AbsTraner {
@@ -31,6 +29,7 @@ public class Traner extends AbsTraner {
 
     private CheckSignIn cs;
     private BerTlvParser tlvParser;
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMDDHHmmss");
 
     public Traner(String merchantId, String terminalId, String tellerNo,
                   String batchNo, IPacker packer,
@@ -235,9 +234,16 @@ public class Traner extends AbsTraner {
             BerTlvs tlvDF26 = tlvParser.parse(HexUtil.parseHex(df26));
             // 外层循环是AID查询了几次，内层循环是一次查询返回的DF26的处理
             for (int i = 0; i < tlvDF26.getList().size(); i = i + 2) {
-                // TODO 判断版本是否过期
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMDDHHmmss");
-                aids.put(tlvDF26.getList().get(i).getHexValue(), tlvDF26.getList().get(i + 1).getHexValue());
+                // 判断版本是否过期
+                try {
+                    Date versionDate = dateFormat.parse(tlvDF26.getList().get(i + 1).getHexValue().substring(2));
+                    if (versionDate.getTime() > new Date().getTime()) {
+                        aids.put(tlvDF26.getList().get(i).getHexValue(), tlvDF26.getList().get(i + 1).getHexValue());
+                    }
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                    aids.put(tlvDF26.getList().get(i).getHexValue(), tlvDF26.getList().get(i + 1).getHexValue());
+                }
             }
         }
 
@@ -319,8 +325,16 @@ public class Traner extends AbsTraner {
         BerTlvs tlvDF24 = tlvParser.parse(tlv56.getBytesValue());
 
         for (int i = 0; i < tlvDF24.getList().size(); i = i + 2) {
-            // TODO 判断版本是否过期
-            rids.put(tlvDF24.getList().get(i).getHexValue(), tlvDF24.getList().get(i + 1).getHexValue());
+            // 判断版本是否过期
+            try {
+                Date versionDate = dateFormat.parse(tlvDF24.getList().get(i + 1).getHexValue().substring(2));
+                if (versionDate.getTime() > new Date().getTime()) {
+                    rids.put(tlvDF24.getList().get(i).getHexValue(), tlvDF24.getList().get(i + 1).getHexValue());
+                }
+            } catch (ParseException e) {
+                rids.put(tlvDF24.getList().get(i).getHexValue(), tlvDF24.getList().get(i + 1).getHexValue());
+                e.printStackTrace();
+            }
         }
 
         return rids;
@@ -418,7 +432,6 @@ public class Traner extends AbsTraner {
                 Map<String, String> aids = new HashMap<>();
                 BerTlvs tlvs = tlvParser.parse(tlvDF26.getBytesValue());
                 for (int i = 0; i < tlvs.getList().size(); i = i + 2) {
-                    // TODO 判断版本是否过期
                     aids.put(tlvs.getList().get(i).getHexValue(), tlvs.getList().get(i + 1).getHexValue());
                 }
                 paramDownloadHandle3(aids, tlvDF27.getHexValue());
@@ -429,7 +442,6 @@ public class Traner extends AbsTraner {
                 Map<String, String> rids = new HashMap<>();
                 BerTlvs tlvs = tlvParser.parse(tlvDF24.getBytesValue());
                 for (int i = 0; i < tlvs.getList().size(); i = i + 2) {
-                    // TODO 判断版本是否过期
                     rids.put(tlvs.getList().get(i).getHexValue(), tlvs.getList().get(i + 1).getHexValue());
                 }
                 paramDownloadHandle4(rids);
@@ -1272,12 +1284,12 @@ public class Traner extends AbsTraner {
 
             respMessage = sendTran(reqMessage);
 
-            // TODO 通知未返回的处理，存储等待下笔交易上送
             field56Handle(respMessage);
         } catch (PackagingException e) {
             LOGGER.debug("when stagesPay happen PackagingException", e);
         } catch (IOException e) {
             LOGGER.debug("when stagesPay happen IOException", e);
+            // TODO 通知未返回的处理，存储等待下笔交易上送
         }
         return respMessage;
     }
@@ -1302,7 +1314,7 @@ public class Traner extends AbsTraner {
         String processCode = "840008";
         IMessage respMessage = null;
         IMessage specialMessage = specialPay(cardNo, amt);
-        if (null != specialMessage && "00".equals(specialMessage.getFieldString(39))){
+        if (null != specialMessage && "00".equals(specialMessage.getFieldString(39))) {
             String field54 = specialMessage.getFieldString(54);
             BigDecimal amount = new BigDecimal(amt);
             BigDecimal specialAmt = new BigDecimal(0);
@@ -1331,7 +1343,7 @@ public class Traner extends AbsTraner {
             }
             respMessage = pay(cardNo, amount.subtract(specialAmt).toString(), validity, posInputType,
                     sequenceNumber, secondTrackData, thirdTrackData, pin, icCardData);
-            if (null == respMessage || !"00".equals(respMessage.getFieldString(39))){
+            if (null == respMessage || !"00".equals(respMessage.getFieldString(39))) {
                 // 普惠消费冲正
                 try {
                     addElementToQueue(createSpecialMessage(cardNo, processCode, amt));
