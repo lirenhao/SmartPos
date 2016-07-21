@@ -46,7 +46,10 @@ public class SettlementHandler {
         }
         IMessage respMessage = mainActivity.getVirtualPos().createTraner().
                 settlement(debitNum, debitAmt, creditNum, creditAmt);
-        mainActivity.getVirtualPos().resetSingIn();
+        if(null != respMessage && "00".equals(respMessage.getFieldString(39))){
+            service.deleteByBatchNo(respMessage.getFieldString(61).substring(0, 6));
+            mainActivity.getVirtualPos().resetSingIn();
+        }
         ResultHandler.result(mainActivity, respMessage);
         handleListener.resultView();
     }

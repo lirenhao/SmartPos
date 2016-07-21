@@ -2,6 +2,7 @@ package com.yada.smartpos.db.service;
 
 import com.yada.smartpos.model.TransLog;
 import org.xutils.DbManager;
+import org.xutils.db.sqlite.WhereBuilder;
 import org.xutils.ex.DbException;
 
 import java.util.ArrayList;
@@ -21,6 +22,10 @@ public class TransLogService {
 
     public void deleteById(String traceNo) throws DbException {
         dbManager.deleteById(TransLog.class, traceNo);
+    }
+
+    public void deleteByBatchNo(String batchNo) throws DbException {
+        dbManager.delete(TransLog.class, WhereBuilder.b("batchNo", "=", batchNo));
     }
 
     public TransLog findById(String traceNo) throws DbException {
